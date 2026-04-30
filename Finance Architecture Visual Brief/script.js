@@ -1,7 +1,6 @@
-import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
-
 const root = document.documentElement;
 let theme = 'light';
+const mermaid = window.mermaid;
 
 function applyTheme(nextTheme) {
   theme = nextTheme;
