@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Event-Driven Finance App Architecture</title>
+    <meta
+      name="description"
+      content="Interactive architecture brief for an event-driven finance app using causal graph inference, signal catalogs, and data-availability roadmaps."
+    />
+    <meta property="og:title" content="Event-Driven Finance App Architecture" />
+    <meta
+      property="og:description"
+      content="A visual system architecture for portfolio-personalized articles, causal graph inference, and CTR-to-trade optimization."
+    />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <link
+      href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=general-sans@400,500,600,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <main id="main">
+      <section id="top" class="hero section">
+        <div class="shell hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Event-driven personalization system</p>
+            <h1>Turn market events into portfolio-personalized articles that move users toward trade action.</h1>
+            <p class="hero-lede">
+              A visual architecture for ingesting market, portfolio, behavior, social, and house-view signals,
+              then selecting the right article frame, CTA, timing, and channel through day-one causal graph inference.
+            </p>
+            <div class="hero-actions" aria-label="Hero actions">
+              <a class="button primary" href="#architecture">Explore architecture</a>
+              <a class="button secondary" href="#causal">See causal loop</a>
+            </div>
+          </div>
+
+          <aside class="hero-panel" aria-label="Optimization objective">
+            <div class="metric-card large">
+              <span class="metric-label">Optimization target</span>
+              <strong>CTR → intent → trade</strong>
+              <p>
+                Measure the whole action ladder: impression, click, read depth, CTA, asset page, order ticket,
+                executed trade, and retention-adjusted value.
+              </p>
+            </div>
+            <div class="mini-grid">
+              <div class="metric-card">
+                <span class="metric-value">Day 1</span>
+                <span class="metric-label">causal graph</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-value">Weekly</span>
+                <span class="metric-label">graph refresh</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-value">8</span>
+                <span class="metric-label">data stages</span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-value">13</span>
+                <span class="metric-label">signal families</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section compressed">
+        <div class="shell">
+          <div class="thesis-strip">
+            <span>North star</span>
+            <p>
+              For this user, in this portfolio state, under this market condition, which signal and article frame
+              creates the largest incremental probability of a valuable action?
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="architecture" class="section">
+        <div class="shell">
+          <div class="section-heading">
+            <p class="eyebrow">01 / system architecture</p>
+            <h2>Event-driven decisioning loop</h2>
+            <p>
+              The system should not generate one article per event. It should generate many article candidates per event,
+              each representing a different causal hypothesis about framing, timing, audience, and CTA.
+            </p>
+          </div>
+
+          <div class="diagram-card">
+            <div class="diagram-toolbar">
+              <div>
+                <h3>Architecture flow</h3>
+                <p>Signal ingestion to production feedback loop.</p>
+              </div>
+              <span class="badge">Mermaid</span>
+            </div>
+            <pre class="mermaid">
+flowchart TD
+  A[External & internal signals] --> B[Event bus]
+  B --> C[Entity resolution]
+  C --> D[Real-time feature store]
+  D --> E[User clustering]
+  D --> F[Portfolio exposure engine]
+  E --> G[Causal graph inference]
+  F --> G
+  G --> H[Article candidate generator]
+  H --> I[Content assembly]
+  G --> J[Ranking, timing & pacing]
+  I --> K[Delivery channels]
+  J --> K
+  K --> L[Outcome tracking]
+  L --> M[Attribution & graph update]
+  M -. weekly feedback .-> G
+            </pre>
+          </div>
+
+          <div class="building-blocks">
+            <article>
+              <span class="block-index">A</span>
+              <h3>Normalize and resolve</h3>
+              <p>Map news, prices, filings, social attention, portfolio events, and house views into canonical tickers, sectors, themes, and time buckets.</p>
+            </article>
+            <article>
+              <span class="block-index">B</span>
+              <h3>Generate hypotheses</h3>
+              <p>Create article candidates for the same event across urgency, opportunity, risk, peer comparison, portfolio impact, social proof, and house-view frames.</p>
+            </article>
+            <article>
+              <span class="block-index">C</span>
+              <h3>Rank by incremental lift</h3>
+              <p>Select candidates using expected incremental CTR, expected trade lift, urgency, relevance, freshness, confidence, and inventory fit.</p>
+            </article>
+            <article>
+              <span class="block-index">D</span>
+              <h3>Learn from outcomes</h3>
+              <p>Use exposure logs, clicks, CTA actions, order events, trades, and holdouts to update graph confidence and decision policy.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="causal" class="section alt">
+        <div class="shell">
+          <div class="section-heading two-column">
+            <div>
+              <p class="eyebrow">02 / causal inference</p>
+              <h2>Day-one causal graph, weekly refutation</h2>
+            </div>
+            <p>
+              The causal graph exists from the first release. What changes over time is not the architecture, but the amount
+              of observable context available to propose, refute, and promote graph relationships.
+            </p>
+          </div>
+
+          <div class="diagram-grid">
+            <div class="diagram-card">
+              <div class="diagram-toolbar">
+                <div>
+                  <h3>Discovery pipeline</h3>
+                  <p>Candidate edges are proposed from lagged time-series models and SHAP values.</p>
+                </div>
+                <span class="badge">weekly</span>
+              </div>
+              <pre class="mermaid">
+flowchart TD
+  A[Normalize all data into time series] --> B[Create lagged features]
+  B --> C[Train model set per target variable]
+  C --> D[Compute SHAP importance]
+  D --> E[Propose candidate graph edges]
+  E --> F[Run refutation pipeline]
+  F --> G{Survives tests?}
+  G -- Yes --> H[Promote to production graph]
+  G -- No --> I[Reject or keep low confidence]
+  H --> J[Article policy service]
+  I --> K[Candidate backlog]
+  J --> L[Weekly rebuild]
+  K --> L
+  L --> A
+              </pre>
+            </div>
+
+            <div class="causal-notes">
+              <article class="note-card">
+                <h3>1. Time-series substrate</h3>
+                <p>All signals are timestamped and aligned to decisioning grains such as one minute, five minutes, hourly, daily, or event-relative time.</p>
+              </article>
+              <article class="note-card">
+                <h3>2. Lagged prediction</h3>
+                <p>Each target is predicted with other time-series variables shifted by small lags to prevent same-timestamp leakage and preserve temporal plausibility.</p>
+              </article>
+              <article class="note-card">
+                <h3>3. SHAP edge proposals</h3>
+                <p>Feature importance identifies candidate graph edges. These are hypotheses, not proof.</p>
+              </article>
+              <article class="note-card">
+                <h3>4. Refute before production</h3>
+                <p>Temporal holdouts, placebo tests, delayed-treatment tests, negative controls, confounder checks, and cluster stability tests decide what survives.</p>
+              </article>
+            </div>
+          </div>
+
+          <div class="diagram-card compact">
+            <div class="diagram-toolbar">
+              <div>
+                <h3>Graph node families</h3>
+                <p>The production graph connects user, portfolio, market, signal, treatment, and outcome states.</p>
+              </div>
+              <span class="badge">candidate edges</span>
+            </div>
+            <pre class="mermaid">
+flowchart LR
+  U[User cluster] --> T[Treatment]
+  P[Portfolio context] --> T
+  M[Market regime] --> S[Signal]
+  S --> T
+  T --> O[Outcome]
+  U --> O
+  P --> O
+  C[Confounders] -.-> T
+  C -.-> O
+  O --> F[Feedback]
+  F --> U
+  F --> T
+  F --> S
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      <section id="signals" class="section">
+        <div class="shell">
+          <div class="section-heading two-column">
+            <div>
+              <p class="eyebrow">03 / signal catalog</p>
+              <h2>Signals as triggers, features, and graph nodes</h2>
+            </div>
+            <p>
+              Each signal can be used to trigger an article, rank an article, personalize content, or become a node in the causal graph.
+              The strongest product emerges when public urgency is fused with private portfolio and behavior context.
+            </p>
+          </div>
+
+          <div class="signal-controls" role="group" aria-label="Signal family filter">
+            <button class="chip active" type="button" data-filter="all">All</button>
+            <button class="chip" type="button" data-filter="public">Public</button>
+            <button class="chip" type="button" data-filter="portfolio">Portfolio</button>
+            <button class="chip" type="button" data-filter="behavior">Behavior</button>
+            <button class="chip" type="button" data-filter="network">Network</button>
+            <button class="chip" type="button" data-filter="internal">Internal</button>
+          </div>
+
+          <div class="signal-grid" data-signal-grid>
+            <article class="signal-card" data-kind="public">
+              <span class="signal-type">Market</span>
+              <h3>Price, volume, volatility</h3>
+              <p>Intraday move, open gap, 52-week high/low, relative strength, volume spike, volatility spike, options volume, ETF flows.</p>
+              <small>Primary use: urgency and timing.</small>
+            </article>
+            <article class="signal-card" data-kind="public">
+              <span class="signal-type">Corporate</span>
+              <h3>Earnings and disclosures</h3>
+              <p>Earnings surprise, guidance, buyback, dividend change, M&A, management change, regulatory decision, insider activity, filings.</p>
+              <small>Primary use: direct security-specific catalysts.</small>
+            </article>
+            <article class="signal-card" data-kind="public">
+              <span class="signal-type">News</span>
+              <h3>Media and narrative shifts</h3>
+              <p>Breaking news, sentiment shift, coverage spike, CEO interview, competitor news, supply chain headlines, geopolitical events.</p>
+              <small>Primary use: story generation and novelty.</small>
+            </article>
+            <article class="signal-card" data-kind="public">
+              <span class="signal-type">Macro</span>
+              <h3>Cross-asset context</h3>
+              <p>CPI, rates, yield curve, oil, gold, FX, jobs, PMI, country policy and central bank announcements.</p>
+              <small>Primary use: portfolio exposure mapping.</small>
+            </article>
+            <article class="signal-card" data-kind="portfolio">
+              <span class="signal-type">Portfolio</span>
+              <h3>Holdings and exposure</h3>
+              <p>Direct holding, watchlist exposure, sector concentration, unrealized gain/loss, position size, cash band, recent buy/sell.</p>
+              <small>Primary use: personal relevance.</small>
+            </article>
+            <article class="signal-card" data-kind="behavior">
+              <span class="signal-type">Behavior</span>
+              <h3>Intent and funnel state</h3>
+              <p>Article clicks, dwell time, asset page views, search queries, watchlist actions, alert creation, order ticket opens, abandoned orders.</p>
+              <small>Primary use: trade readiness.</small>
+            </article>
+            <article class="signal-card" data-kind="network">
+              <span class="signal-type">Social</span>
+              <h3>Viral attention</h3>
+              <p>Twitter/X mentions, Reddit spikes, creator coverage, search trend spikes, forum discussion, influencer commentary, meme velocity.</p>
+              <small>Primary use: curiosity and FOMO intensity.</small>
+            </article>
+            <article class="signal-card" data-kind="network">
+              <span class="signal-type">Network</span>
+              <h3>Cohort and friend momentum</h3>
+              <p>Portfolio-similar trading spikes, cohort watchlist activity, friend-circle topic trends, group chat momentum, theme popularity.</p>
+              <small>Primary use: social proof and conversation utility.</small>
+            </article>
+            <article class="signal-card" data-kind="internal">
+              <span class="signal-type">House view</span>
+              <h3>Proprietary conviction</h3>
+              <p>Internal analyst notes, view changes, valuation gaps, sentiment models, editorial priority, theme baskets, conversion propensity.</p>
+              <small>Primary use: differentiated article substance.</small>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="roadmap" class="section alt">
+        <div class="shell">
+          <div class="section-heading">
+            <p class="eyebrow">04 / roadmap</p>
+            <h2>Data availability unlocks better goals</h2>
+            <p>
+              The system stays broadly the same. Each new data layer improves article quality, CTA quality, timing quality,
+              and the system’s ability to create new user behavior.
+            </p>
+          </div>
+
+          <div class="diagram-card">
+            <div class="diagram-toolbar">
+              <div>
+                <h3>Data availability ladder</h3>
+                <p>From observable basics to longitudinal behavior shaping.</p>
+              </div>
+              <span class="badge">roadmap</span>
+            </div>
+            <pre class="mermaid">
+flowchart LR
+  S0[Measurement] --> S1[Public market data]
+  S1 --> S2[Watchlist & preferences]
+  S2 --> S3[Brokerage portfolio]
+  S3 --> S4[Behavioral intent]
+  S4 --> S5[Experimentation]
+  S5 --> S6[Social & network]
+  S6 --> S7[House view]
+  S7 --> S8[Longitudinal journey]
+            </pre>
+          </div>
+
+          <div class="roadmap">
+            <article class="roadmap-card">
+              <span>Stage 0</span>
+              <h3>Measurement availability</h3>
+              <p>Make the graph observable through exposure logs, outcome events, article metadata, and holdouts.</p>
+              <strong>Behavior unlocked: baseline article consumption.</strong>
+            </article>
+            <article class="roadmap-card">
+              <span>Stage 1</span>
+              <h3>Public market data</h3>
+              <p>Trigger timely market-aware articles using price, volume, earnings, corporate actions, news, and macro data.</p>
+              <strong>Behavior unlocked: urgency-driven clicks.</strong>
+            </article>
+            <article class="roadmap-card">
+              <span>Stage 2</span>
+              <h3>Watchlist and preference</h3>
+              <p>Move from market relevance to user-interest relevance using watchlists, search, followed tickers, and topic clicks.</p>
+              <strong>Behavior unlocked: repeat clicks and watchlist actions.</strong>
+            </article>
+            <article class="roadmap-card">
+              <span>Stage 3</span>
+              <h3>Brokerage portfolio</h3>
+              <p>Convert generic events into personal portfolio events through holdings, exposure, recent trades, and cash readiness.</p>
+              <strong>Behavior unlocked: higher click-to-trade conversion.</strong>
+            </article>
+            <article class="roadmap-card">
+              <span>Stage 4</span>
+              <h3>Behavioral intent</h3>
+              <p>Identify users close to action using asset views, chart interactions, alerts, order tickets, and abandoned orders.</p>
+              <strong>Behavior unlocked: more order ticket opens.</strong>
+            </article>
+            <article class="roadmap-card">
+              <span>Stage 5</span>
+              <h3>Experimentation</h3>
+              <p>Separate raw propensity from incremental lift using treatments, delayed sends, negative controls, and refutation.</p>
+              <strong>Behavior unlocked: better trade lift per impression.</strong>
+            </article>
+            <article class="roadmap-card">
+              <span>Stage 6</span>
+              <h3>Social and network</h3>
+              <p>Add peer momentum and social proof through cohort activity, portfolio-similar users, and friend-circle themes.</p>
+              <strong>Behavior unlocked: curiosity and discussion-driven engagement.</strong>
+            </article>
+            <article class="roadmap-card">
+              <span>Stage 7</span>
+              <h3>House view</h3>
+              <p>Improve article substance with proprietary research, view changes, valuation gaps, conviction, and theme baskets.</p>
+              <strong>Behavior unlocked: research-led trading.</strong>
+            </article>
+            <article class="roadmap-card">
+              <span>Stage 8</span>
+              <h3>Longitudinal journey</h3>
+              <p>Optimize sequences across articles, alerts, asset views, watchlists, and order moments.</p>
+              <strong>Behavior unlocked: app-as-daily-trading-prompt.</strong>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="mvp" class="section">
+        <div class="shell mvp-layout">
+          <div class="section-heading sticky-copy">
+            <p class="eyebrow">05 / build scope</p>
+            <h2>MVP with graph priors from the start</h2>
+            <p>
+              The MVP should include causal graph inference on day one, but the graph is sparse and uncertainty-aware.
+              It combines structural priors, deterministic relevance rules, and early outcome learning.
+            </p>
+          </div>
+
+          <div class="mvp-stack">
+            <article class="mvp-card">
+              <h3>Core product</h3>
+              <ul>
+                <li>Public event ingestion for price moves, news, earnings, and corporate actions.</li>
+                <li>Portfolio and watchlist matching.</li>
+                <li>Article candidate generation from templates.</li>
+                <li>Basic personalization inserts and CTA variants.</li>
+              </ul>
+            </article>
+            <article class="mvp-card">
+              <h3>Decisioning</h3>
+              <ul>
+                <li>Day-one causal graph with structural priors.</li>
+                <li>Relevance, urgency, freshness, confidence, and fatigue scoring.</li>
+                <li>Push and in-app delivery orchestration.</li>
+                <li>Manual analyst console for top triggers and suppressions.</li>
+              </ul>
+            </article>
+            <article class="mvp-card">
+              <h3>Learning loop</h3>
+              <ul>
+                <li>Exposure and outcome logging.</li>
+                <li>CTR, order ticket open, and executed trade attribution.</li>
+                <li>Holdout groups and delayed-send controls.</li>
+                <li>Weekly graph discovery, refutation, promotion, and rollback.</li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-grid">
+        <p>Event-driven finance app architecture brief.</p>
+        <a href="#top">Back to top</a>
+      </div>
+    </footer>
+
+    <script type="module" src="./script.js"></script>
+  <script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="transform:translate(-${scrollX}px,-${scrollY}px);transform-origin:top left">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>
