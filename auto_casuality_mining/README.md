@@ -24,16 +24,22 @@ Three kinds are supported (see `causality_mining/timeseries/kind.py`):
 | `CATEGORICAL` | `pd.Series[str]` | sector, regime, article frame |
 | `VECTOR` (n-D real) | `pd.DataFrame[float]` | embedding, factor exposures, OHLCV |
 
-## Universal normalizations
+## Change encoders
 
-`causality_mining/normalize/` ships transforms that consistently aid causal
-discovery on financial / behavioral series:
+`causality_mining/normalize/` ships `Change` encoders that turn raw levels into
+"change" representations. Every causal edge in this package means
 
-- `Delta` — first difference (record the change, not the level)
-- `LogReturn` — `log(x_t / x_{t-1})`, the canonical price normalization
-- `ZScore` — rolling z-score (so unit changes do not dominate importance)
-- `OneHot` — categorical → indicator scalars (one series per level)
-- `Pipeline` — compose multiple normalizations
+> a 1-step *backward* change in the source at time t causes a `lag`-step
+> *forward* change in the target between t and t+lag
+
+so the encoder defines BOTH directions (`backward(h)` and `forward(h)`):
+
+- `Delta` — arithmetic difference `x[b] - x[a]`
+- `PctChange` — `x[b] / x[a] - 1`, scale-invariant for positive levels
+- `LogReturn` — `log(x[b]) - log(x[a])`, additive in the log domain
+
+For CATEGORICAL inputs, every encoder returns a one-hot indicator over the
+`(prev_label, curr_label)` pair (see `normalize/transition.py`).
 
 ## Public API
 
@@ -58,9 +64,9 @@ the architecture doc and consumed by the inference engine in production.
 ```
 causality_mining/
   timeseries/   kind.py series.py collection.py
-  normalize/    base.py delta.py log_return.py zscore.py one_hot.py pipeline.py
-  panel/        resample.py lag.py builder.py
+  normalize/    base.py delta.py pct_change.py log_return.py transition.py encode.py
+  panel/        resample.py builder.py
   graph/        node.py edge.py causal_graph.py io.py
-  curation/     targets.py candidates.py importance.py refute.py curator.py
+  curation/     targets.py candidates.py importance.py forward_target.py loo.py refute.py curator.py discover.py
   inference/    event.py effect.py propagate.py prediction.py engine.py
 ```

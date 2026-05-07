@@ -1,9 +1,8 @@
 """End-to-end smoke test on synthetic data.
 
 Constructs three input timeseries -- one of each supported kind -- where the
-target (CTR) is a known linear function of a lagged sentiment + a one-hot
-frame indicator. The test then runs `curate_graph` and `predict` and checks
-that:
+target (CTR) is a known function of a lagged sentiment + a one-hot frame
+indicator. The test then runs `curate_graph` and `predict` and checks that:
 
     * curation discovers at least one edge into the target,
     * inference returns a non-trivial delta for the target.
@@ -23,7 +22,8 @@ from causality_mining import (
     predict,
 )
 from causality_mining.curation.curator import CurationConfig
-from causality_mining.normalize.pipeline import Pipeline
+from causality_mining.inference.engine import InferenceConfig
+from causality_mining.normalize.delta import Delta
 
 
 def _make_collection(n: int = 400) -> TimeSeriesCollection:
@@ -54,19 +54,27 @@ def _make_collection(n: int = 400) -> TimeSeriesCollection:
 
 def test_curate_then_predict() -> None:
     collection = _make_collection()
+    change = Delta()
     cfg = CurationConfig(
         freq="1h",
+        change=change,
         importance_threshold=0.001,
         confidence_threshold=0.0,
-        normalize=Pipeline(steps=()),
         use_shap=False,
     )
+    encoded_ctr_id = f"ctr__{change.name}_back1"
     graph = curate_graph(collection, targets=[TargetSpec("ctr")], config=cfg)
 
-    incoming_to_ctr = graph.in_edges("ctr")
+    incoming_to_ctr = graph.in_edges(encoded_ctr_id)
     assert incoming_to_ctr, "curation should discover at least one parent for CTR"
 
     last_ts = collection.get("sentiment").data.index[-1]
-    event = NewEvent(series_id="sentiment", timestamp=last_ts, value=5.0)
-    result = predict(graph, event, history=collection)
-    assert "ctr" in result.targets or not incoming_to_ctr
+    encoded_sentiment_id = f"sentiment__{change.name}_back1"
+    event = NewEvent(series_id=encoded_sentiment_id, timestamp=last_ts, value=1.0)
+    result = predict(
+        graph,
+        event,
+        history=collection,
+        config=InferenceConfig(freq="1h", change=change),
+    )
+    assert encoded_ctr_id in result.targets or not incoming_to_ctr

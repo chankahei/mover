@@ -1,15 +1,12 @@
-"""Per-target leave-one-out fit with LightGBM + Tree SHAP importance.
+"""Per-target leave-one-out fit with LightGBM + Tree SHAP.
 
-Predict a single target column from lagged copies of every other feature column.
+For one target column, fit ONE model PER LAG. Each model predicts the
+forward-`lag`-step change of the target at time t from the (already backward
+1-step changed) feature columns at time t. SHAP gives per-feature importance
++ signed strength for that lag.
 
-- SCALAR target  -> `LGBMRegressor(objective="regression")`.
-- CATEGORICAL    -> `LGBMClassifier(objective="binary"|"multiclass")`.
-
-Returns one `FeatureScore` per lagged feature column (importance + signed
-strength) using `shap.TreeExplainer`. Tree-based models capture non-linear
-relationships (e.g. `|return|`, thresholds), which `Ridge` / `LogisticRegression`
-cannot. VECTOR series are handled by the caller; this module only consumes a
-flat panel of pre-built feature columns.
+The caller assembles per-feature scores from each lag into edge candidates;
+this module only owns the fit + SHAP extraction for a single (target, lag).
 """
 from __future__ import annotations
 
@@ -19,48 +16,48 @@ from typing import Sequence
 import numpy as np
 import pandas as pd
 
-from causality_mining.panel.lag import lagged_columns
 from causality_mining.timeseries.kind import TimeSeriesKind
 
 
 @dataclass(frozen=True)
 class FeatureScore:
-    """Score of one lagged feature column for one target."""
+    """Score of one feature column for one target at one lag."""
 
     importance: float
     signed_strength: float
 
 
-def fit_loo_target(
-    panel: pd.DataFrame,
-    target_col: str,
+_TARGET_COL = "__target__"
+
+
+def fit_one_lag(
+    feature_panel: pd.DataFrame,
+    target_series: pd.Series,
     target_kind: TimeSeriesKind,
     feature_cols: Sequence[str],
-    lags: Sequence[int],
     n_estimators: int = 200,
     learning_rate: float = 0.05,
     num_leaves: int = 31,
     min_child_samples: int = 20,
     random_state: int = 0,
-    alpha: float | None = None,  # accepted for backwards compat; ignored.
 ) -> tuple[dict[str, FeatureScore], int]:
-    """Fit a LightGBM model and return per-feature SHAP-derived scores.
+    """Fit a LightGBM model for one (target, lag) pair and return SHAP scores.
 
-    `alpha` is accepted but ignored; it remains in the signature so older
-    callers that forwarded a Ridge alpha continue to work.
+    `target_series` must already be the forward-change of the original target
+    at the lag of interest, indexed on the same grid as `feature_panel`.
     """
-    del alpha  # accepted for backwards compat but unused.
-
     if not feature_cols:
         return {}, 0
 
-    x_lagged = lagged_columns(panel, list(feature_cols), list(lags))
-    df = pd.concat([x_lagged, panel[[target_col]]], axis=1).dropna()
-    if df.empty or df[target_col].nunique() < 2:
+    df = pd.concat(
+        [feature_panel[list(feature_cols)], target_series.rename(_TARGET_COL)],
+        axis=1,
+    ).dropna()
+    if df.empty or df[_TARGET_COL].nunique() < 2:
         return {}, 0
 
-    x = df.drop(columns=[target_col]).astype(float)
-    y_raw = df[target_col]
+    x = df.drop(columns=[_TARGET_COL]).astype(float)
+    y_raw = df[_TARGET_COL]
 
     common = dict(
         n_estimators=n_estimators,
@@ -76,26 +73,27 @@ def fit_loo_target(
 
     shap_matrix = _tree_shap_matrix(model, x.values)
     if shap_matrix is None:
-        gains = np.asarray(getattr(model, "feature_importances_", []), dtype=float)
-        if gains.size != x.shape[1] or gains.sum() <= 0:
-            return {}, len(df)
-        normalized = gains / gains.sum()
-        scores = {
-            col: FeatureScore(importance=float(normalized[i]), signed_strength=0.0)
-            for i, col in enumerate(x.columns)
-        }
-        return scores, len(df)
+        return _gain_scores(model, x.columns, n_rows=len(df)), len(df)
 
     mean_abs = np.mean(np.abs(shap_matrix), axis=0)
     mean_signed = np.mean(shap_matrix, axis=0)
     scores = {
-        col: FeatureScore(
-            importance=float(mean_abs[i]),
-            signed_strength=float(mean_signed[i]),
-        )
+        col: FeatureScore(importance=float(mean_abs[i]), signed_strength=float(mean_signed[i]))
         for i, col in enumerate(x.columns)
     }
     return scores, len(df)
+
+
+def _gain_scores(model, columns, n_rows: int) -> dict[str, FeatureScore]:
+    """Fall back to model-reported gain importance when SHAP isn't available."""
+    gains = np.asarray(getattr(model, "feature_importances_", []), dtype=float)
+    if gains.size != len(columns) or gains.sum() <= 0:
+        return {}
+    normalized = gains / gains.sum()
+    return {
+        col: FeatureScore(importance=float(normalized[i]), signed_strength=0.0)
+        for i, col in enumerate(columns)
+    }
 
 
 def _fit_lgbm(

@@ -20,9 +20,9 @@ _load_env()
 
 from causality_mining import DiscoveryConfig, discover_graph  # noqa: E402
 from causality_mining.normalize.pct_change import PctChange  # noqa: E402
-from causality_mining.normalize.pipeline import Pipeline  # noqa: E402
 
-_NORMALIZE_SUFFIX = "__pct_change"
+_CHANGE = PctChange()
+_NORMALIZE_SUFFIX = f"__{_CHANGE.name}_back1"
 
 from data import MAG7, build_market_collection  # noqa: E402
 from ctr import build_ctr  # noqa: E402
@@ -97,7 +97,6 @@ def main() -> int:
         pipeline.update(1)
 
         print("[2/4] discovering causal graph (leave-one-out LightGBM + Tree SHAP) ...")
-        normalize = Pipeline(steps=(PctChange(),))
         edge_min_imp = _get_env_float("YF_DEMO_EDGE_MIN_IMPORTANCE", 0.0)
         edge_min_conf = _get_env_float("YF_DEMO_EDGE_MIN_CONFIDENCE", 0.25)
         edge_topk = _get_env_int("YF_DEMO_EDGE_TOPK_PER_TARGET", 2)
@@ -105,7 +104,7 @@ def main() -> int:
         dowhy_min_conf = _get_env_float("YF_DEMO_DOWHY_MIN_CONFIDENCE", 0.25)
         cfg = DiscoveryConfig(
             freq="B",
-            normalize=normalize,
+            change=_CHANGE,
             lags=(1, 2, 4, 8, 16, 32),
             importance_threshold=edge_min_imp,
             min_confidence=edge_min_conf,
@@ -123,7 +122,8 @@ def main() -> int:
             f"min_conf={dowhy_min_conf:.2f}"
         )
         graph = discover_graph(collection, config=cfg)
-        normalized_collection = normalize.apply_collection(collection)
+        from causality_mining.normalize.encode import encode_features  # noqa: E402
+        normalized_collection = encode_features(collection, _CHANGE)
         print(f"      discovered graph: {len(graph.nodes)} nodes, {len(graph.edges)} edges")
         for e in graph.edges.values():
             print(
@@ -150,8 +150,9 @@ def main() -> int:
         summaries = predict_multi(
             graph=graph,
             stimuli=stimuli,
-            history=normalized_collection,
+            history=collection,
             timestamp=last_ts,
+            change=_CHANGE,
         )
         stim_report_path = save_stimulation_report(out_dir / "stimulate.txt", stimuli, summaries)
         ctr_keys = sorted(k for k in summaries if k.startswith("ctr_"))
@@ -178,7 +179,13 @@ def main() -> int:
 
         print("[4/4] writing visualizations ...")
         graph_artifact = render_graph(graph, out_dir / "graph.png")
-        edge_paths = render_edge_pairs(graph, normalized_collection, out_dir / "edges")
+        edge_paths = render_edge_pairs(
+            graph,
+            feature_collection=normalized_collection,
+            raw_collection=collection,
+            change=_CHANGE,
+            out_dir=out_dir / "edges",
+        )
         print(f"      wrote {graph_artifact}")
         print(f"      wrote {(out_dir / 'graph.mmd')}")
         print(f"      wrote {len(edge_paths)} edge pair plots into {out_dir / 'edges'}")

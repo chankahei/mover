@@ -21,7 +21,8 @@ from causality_mining import (
     TimeSeriesCollection,
     predict,
 )
-from causality_mining.panel.builder import build_panel
+from causality_mining.normalize.base import Change
+from causality_mining.normalize.encode import encode_features
 
 
 @dataclass(frozen=True)
@@ -48,12 +49,12 @@ def build_price_volume_stimulus(
     tickers: Iterable[str],
     price_delta: float,
     volume_delta: float,
-    suffix: str = "__pct_change",
+    suffix: str,
 ) -> list[Stimulus]:
-    """One price + one volume stimulus per ticker, on the post-normalize nodes.
+    """One price + one volume stimulus per ticker, on the post-encode nodes.
 
-    `suffix` should match the suffix produced by the pipeline's normalizer
-    (e.g. `__pct_change` for `PctChange`, `__delta` for `Delta`).
+    `suffix` must match the suffix the configured `Change` adds to ids when
+    building the feature panel (e.g. `__pct_change_back1` for `PctChange()`).
     """
     out: list[Stimulus] = []
     for t in tickers:
@@ -67,21 +68,29 @@ def predict_multi(
     stimuli: list[Stimulus],
     history: TimeSeriesCollection,
     timestamp: pd.Timestamp,
+    change: Change,
     freq: str = "B",
 ) -> dict[str, TargetSummary]:
-    """Run inference for every stimulus and sum the per-target deltas."""
-    panel, layout = build_panel(history, freq)
-    cfg = InferenceConfig(freq=freq)
+    """Run inference for every stimulus and sum the per-target deltas.
+
+    Each stimulus's `delta` is the magnitude of the 1-step backward change to
+    inject on the source node, in the encoder's units (e.g. 0.05 = +5% pct
+    change). The inference engine reads it as the treatment magnitude directly.
+    """
+    cfg = InferenceConfig(freq=freq, change=change)
+    encoded_to_raw_pre = {
+        encoded.id: raw.pre_normalized
+        for raw, encoded in zip(history, encode_features(history, change))
+    }
 
     accum: dict[str, dict] = {}
     for stim in stimuli:
         if stim.series_id not in graph.nodes:
             continue
-        last_value = _last_panel_value(panel, layout.series_columns(stim.series_id))
         event = NewEvent(
             series_id=stim.series_id,
             timestamp=timestamp,
-            value=last_value + stim.delta,
+            value=stim.delta,
         )
         result = predict(graph, event=event, history=history, config=cfg)
         for tid, tp in result.targets.items():
@@ -95,11 +104,15 @@ def predict_multi(
 
     out: dict[str, TargetSummary] = {}
     for tid, row in accum.items():
+        if encoded_to_raw_pre.get(tid, False):
+            predicted = row["baseline"] + row["delta"]
+        else:
+            predicted = change.apply(row["baseline"], row["delta"])
         out[tid] = TargetSummary(
             target_id=tid,
             baseline=row["baseline"],
             delta=row["delta"],
-            predicted=row["baseline"] + row["delta"],
+            predicted=predicted,
             confidence=float(np.mean(row["confidences"])) if row["confidences"] else 0.0,
             n_stimuli=row["n"],
         )
@@ -129,11 +142,3 @@ def save_stimulation_report(
         )
     out_path.write_text("\n".join(lines) + "\n")
     return out_path
-
-
-def _last_panel_value(panel: pd.DataFrame, columns: list[str]) -> float:
-    """Mean of the last non-NaN row across `columns`. Returns 0.0 if empty."""
-    if not columns or panel.empty:
-        return 0.0
-    last_row = panel[columns].dropna(how="all").iloc[-1]
-    return float(last_row.mean())

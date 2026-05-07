@@ -15,10 +15,14 @@ class Edge:
     Attributes:
         source: source node id.
         target: target node id.
-        lag: positive integer, in panel periods. `lag=k` means a change in the
-            source at time t-k is associated with a response in the target at t.
-        strength: signed magnitude of the estimated causal effect (per unit of
-            source change). Sign is meaningful for SCALAR/VECTOR sources.
+        lag: positive integer, in panel periods. `lag=k` means a 1-step
+            backward change in the source at time t is associated with a
+            k-step forward change in the target between t and t+k. Both sides
+            of the relationship use the SAME `Change` encoder configured at
+            curation time (e.g. PctChange features -> PctChange forward target).
+        strength: signed magnitude of the estimated causal effect: per one unit
+            of 1-step source change, how many units of k-step forward target
+            change. Sign is meaningful for SCALAR/VECTOR sources.
         confidence: 0..1, derived from importance + refutation outcomes.
         importance: raw feature importance score (e.g. SHAP) before refutation.
         refutations: dict of refutation_name -> p-value-like score.

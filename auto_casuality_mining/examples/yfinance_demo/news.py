@@ -8,7 +8,7 @@ Per-day pipeline:
 
 The per-day vectors are emitted as-is (full embedding dim) as a VECTOR
 `TimeSeries` with `pre_normalized=True` (the report already encodes change
-semantics, so the package's `Delta`/`LogReturn`/`ZScore` should NOT touch it).
+semantics, so the package's `Change` encoder should NOT touch it).
 """
 from __future__ import annotations
 

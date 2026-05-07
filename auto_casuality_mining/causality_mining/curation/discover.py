@@ -1,16 +1,25 @@
 """Leave-one-out causal discovery on a `TimeSeriesCollection`.
 
-For every SCALAR or CATEGORICAL series, fit a lagged linear / logistic model
-that predicts its current value from every other series, then aggregate SHAP
-importances per `(source_series, lag)` to propose edges. VECTOR series are
-NEVER predicted as targets but remain available as input features.
+Causal claim of an edge `A -> B` with lag `L`:
 
-Vector input features are reduced to a single scalar via element-wise max
-pooling along the column axis (sign-preserving abs-max): if any element of the
-vector has a causal effect at a given lag, the whole vector is treated as
-having a causal effect.
+    "A 1-step backward change of A at time t causes the L-step forward change
+    of B between t and t+L."
 
-Public API: `discover_graph(collection, config)` and `DiscoveryConfig`.
+Concretely:
+
+- Features: backward 1-step change of every series at time t, via
+  `cfg.change.backward(ts, 1)`. Each series contributes one (or, for VECTORs,
+  one pooled) panel column.
+- Per-target loop: for every non-VECTOR, non-CATEGORICAL target series, fit
+  ONE LightGBM model PER LAG predicting `cfg.change.forward(target, lag)` at
+  time t from the feature columns at time t. Per-feature SHAP gives the
+  per-source importance/strength at that lag.
+- Aggregation: the (source, lag) with highest importance is kept per source,
+  then thresholds + (optional) DoWhy refutation decide which become edges.
+
+VECTOR sources are reduced to a single panel column via sign-preserving
+abs-max pooling. VECTOR / CATEGORICAL targets are skipped (they would yield
+multi-output regressions which this module does not implement).
 """
 from __future__ import annotations
 
@@ -21,15 +30,16 @@ import numpy as np
 import pandas as pd
 
 from causality_mining.curation.candidates import CandidateEdge
-from causality_mining.curation.loo import FeatureScore, fit_loo_target
+from causality_mining.curation.forward_target import forward_target_column
+from causality_mining.curation.loo import FeatureScore, fit_one_lag
 from causality_mining.curation.refute import refute_candidate, to_edge
 from causality_mining.graph.causal_graph import CausalGraph
 from causality_mining.graph.edge import Edge
 from causality_mining.graph.node import Node
+from causality_mining.normalize.base import Change
 from causality_mining.normalize.delta import Delta
-from causality_mining.normalize.pipeline import Pipeline
+from causality_mining.normalize.encode import encode_features
 from causality_mining.panel.builder import ColumnLayout
-from causality_mining.panel.lag import lagged_columns
 from causality_mining.panel.resample import resample_to_grid
 from causality_mining.timeseries.collection import TimeSeriesCollection
 from causality_mining.timeseries.kind import TimeSeriesKind
@@ -42,20 +52,19 @@ _DEFAULT_LAGS: tuple[int, ...] = (1, 2, 4, 8, 16, 32)
 class DiscoveryConfig:
     """Knobs for `discover_graph`.
 
-    Defaults match the leave-one-out spec: lags `(1, 2, 4, 8, 16, 32)`, Ridge /
-    Logistic regression with `alpha=1.0`, and VECTOR input features reduced to
-    a single scalar per timestamp via sign-preserving abs-max pooling.
+    `change` is the single change-encoder applied to features (backward, h=1)
+    and to targets (forward, h=lag). Defaults to `Delta()`. To use multiplicative
+    change, pass `PctChange()`; to use log-additive change, pass `LogReturn()`.
     """
 
     freq: str = "1D"
-    normalize: Pipeline = field(default_factory=lambda: Pipeline(steps=(Delta(),)))
+    change: Change = field(default_factory=Delta)
     lags: tuple[int, ...] = _DEFAULT_LAGS
     importance_threshold: float = 0.0
     min_confidence: float = 0.0
     max_parents_per_target: int | None = None
     dowhy_refute_top_k_per_target: int = 0
     dowhy_confidence_threshold: float = 0.0
-    alpha: float = 1.0
     debug: bool = False
     debug_top_features: int = 10
 
@@ -64,36 +73,42 @@ def discover_graph(
     collection: TimeSeriesCollection,
     config: DiscoveryConfig | None = None,
 ) -> CausalGraph:
-    """Build a causal graph by predicting every non-VECTOR series from all others."""
+    """Build a causal graph by predicting forward target change from backward feature change."""
     cfg = config or DiscoveryConfig()
     debug_on = cfg.debug or os.environ.get("CAUSALITY_DEBUG") == "1"
 
-    normalized = (
-        cfg.normalize.apply_collection(collection) if cfg.normalize.steps else collection
-    )
-
-    feature_panel, layout = _build_feature_panel(normalized, cfg)
+    feature_collection = encode_features(collection, cfg.change)
+    feature_panel, layout = _build_feature_panel(feature_collection, cfg)
 
     graph = CausalGraph()
-    series_kind: dict[str, TimeSeriesKind] = {}
-    for ts in normalized:
-        graph.add_node(Node(id=ts.id, kind=ts.kind, is_target=ts.kind is not TimeSeriesKind.VECTOR))
-        series_kind[ts.id] = ts.kind
+    pairs = list(zip(collection, feature_collection))
+    for raw_ts, encoded_ts in pairs:
+        graph.add_node(
+            Node(
+                id=encoded_ts.id,
+                kind=encoded_ts.kind,
+                is_target=raw_ts.kind is TimeSeriesKind.SCALAR,
+            )
+        )
 
     if debug_on:
         print(f"[discover] panel shape={feature_panel.shape} freq={cfg.freq} lags={cfg.lags}")
-        for sid, kind in series_kind.items():
-            cols = layout.series_columns(sid)
-            print(f"[discover] series={sid} kind={kind.value} feature_cols={len(cols)}")
+        for raw_ts, encoded_ts in pairs:
+            cols = layout.series_columns(encoded_ts.id)
+            print(
+                f"[discover] series={encoded_ts.id} raw_kind={raw_ts.kind.value} "
+                f"feature_cols={len(cols)}"
+            )
 
-    for target_series_id, target_kind in series_kind.items():
-        if target_kind is TimeSeriesKind.VECTOR:
+    for raw_ts, encoded_ts in pairs:
+        if raw_ts.kind is not TimeSeriesKind.SCALAR:
             if debug_on:
-                print(f"[discover] skip target {target_series_id} (VECTOR)")
+                print(f"[discover] skip target {encoded_ts.id} (raw_kind={raw_ts.kind.value})")
             continue
         _discover_one_target(
-            target_series_id=target_series_id,
-            target_kind=target_kind,
+            encoded_target_id=encoded_ts.id,
+            raw_target_ts=raw_ts,
+            raw_target_kind=raw_ts.kind,
             feature_panel=feature_panel,
             layout=layout,
             cfg=cfg,
@@ -107,47 +122,46 @@ def discover_graph(
 
 
 def _discover_one_target(
-    target_series_id: str,
-    target_kind: TimeSeriesKind,
+    encoded_target_id: str,
+    raw_target_ts,
+    raw_target_kind: TimeSeriesKind,
     feature_panel: pd.DataFrame,
     layout: ColumnLayout,
     cfg: DiscoveryConfig,
     graph: CausalGraph,
     debug_on: bool,
 ) -> None:
-    """Fit one LOO target and add its passing edges to `graph` in place."""
-    target_cols = layout.series_columns(target_series_id)
-    if not target_cols:
-        return
-    target_col = target_cols[0]
+    """Fit one model per lag, aggregate per source, add edges to `graph`."""
     feature_cols = [
-        c for c in feature_panel.columns if layout.column_to_series[c] != target_series_id
+        c for c in feature_panel.columns if layout.column_to_series[c] != encoded_target_id
     ]
+    if not feature_cols:
+        return
 
-    scores, n_samples = fit_loo_target(
-        panel=feature_panel,
-        target_col=target_col,
-        target_kind=target_kind,
+    per_lag_scores, n_samples = _fit_all_lags(
+        raw_target_ts=raw_target_ts,
+        raw_target_kind=raw_target_kind,
+        feature_panel=feature_panel,
         feature_cols=feature_cols,
-        lags=cfg.lags,
-        alpha=cfg.alpha,
+        cfg=cfg,
     )
     if debug_on:
         print(
-            f"[discover] target={target_series_id} kind={target_kind.value} "
-            f"n_samples={n_samples} feature_cols={len(feature_cols)} scores={len(scores)}"
+            f"[discover] target={encoded_target_id} kind={raw_target_kind.value} "
+            f"n_samples={n_samples} feature_cols={len(feature_cols)} "
+            f"lags_with_scores={sum(1 for s in per_lag_scores.values() if s)}"
         )
-    if not scores:
+    if not per_lag_scores:
         return
 
-    per_lag = _aggregate_per_source_lag(scores, layout, target_series_id)
-    per_source_best = _best_lag_per_source(per_lag)
+    per_source_lag = _aggregate_per_source_lag(per_lag_scores, layout, encoded_target_id)
+    per_source_best = _best_lag_per_source(per_source_lag)
 
     if debug_on:
         ranked = sorted(per_source_best.items(), key=lambda kv: -kv[1][1])
         for src, (lag, imp, strength) in ranked[: cfg.debug_top_features]:
             print(
-                f"[discover] {src} -> {target_series_id} best_lag={lag} "
+                f"[discover] {src} -> {encoded_target_id} best_lag={lag} "
                 f"imp={imp:+.6f} strength={strength:+.6f}"
             )
 
@@ -161,7 +175,7 @@ def _discover_one_target(
             n_drop_imp += 1
             if debug_on:
                 print(
-                    f"[discover] DROP {src}->{target_series_id} lag={lag} "
+                    f"[discover] DROP {src}->{encoded_target_id} lag={lag} "
                     f"imp={imp:.6f} (< importance_threshold={cfg.importance_threshold})"
                 )
             continue
@@ -170,7 +184,7 @@ def _discover_one_target(
             n_drop_conf += 1
             if debug_on:
                 print(
-                    f"[discover] DROP {src}->{target_series_id} lag={lag} "
+                    f"[discover] DROP {src}->{encoded_target_id} lag={lag} "
                     f"imp={imp:.6f} rel_conf={confidence:.3f} "
                     f"(< min_confidence={cfg.min_confidence})"
                 )
@@ -181,13 +195,13 @@ def _discover_one_target(
         ranked_edges.append((
             Edge(
                 source=src,
-                target=target_series_id,
+                target=encoded_target_id,
                 lag=lag,
                 strength=strength,
                 confidence=confidence,
                 importance=imp,
             ),
-            f"{src_cols[0]}__lag{lag}",
+            src_cols[0],
         ))
 
     ranked_edges.sort(key=lambda item: item[0].importance, reverse=True)
@@ -199,10 +213,9 @@ def _discover_one_target(
 
     final_edges = _apply_dowhy_refutation(
         ranked_edges=ranked_edges,
-        target_series_id=target_series_id,
-        target_col=target_col,
+        encoded_target_id=encoded_target_id,
+        raw_target_ts=raw_target_ts,
         feature_panel=feature_panel,
-        feature_cols=feature_cols,
         cfg=cfg,
         debug_on=debug_on,
     )
@@ -212,36 +225,55 @@ def _discover_one_target(
 
     if debug_on:
         print(
-            f"[discover] funnel for {target_series_id}: "
+            f"[discover] funnel for {encoded_target_id}: "
             f"sources={n_total} -> after_imp={n_total - n_drop_imp} "
             f"-> after_relconf={n_pre_topk} (drop_imp={n_drop_imp}, drop_relconf={n_drop_conf}) "
             f"-> after_topk={n_post_topk} (drop_topk={n_drop_topk}) "
             f"-> after_dowhy={len(final_edges)} (drop_dowhy={n_drop_dowhy})"
         )
         print(
-            f"[discover] kept {len(final_edges)} parents for {target_series_id} "
+            f"[discover] kept {len(final_edges)} parents for {encoded_target_id} "
             f"(min_imp={cfg.importance_threshold}, min_conf={cfg.min_confidence}, "
             f"max_parents={cfg.max_parents_per_target}, dowhy_topk={cfg.dowhy_refute_top_k_per_target})"
         )
 
 
+def _fit_all_lags(
+    raw_target_ts,
+    raw_target_kind: TimeSeriesKind,
+    feature_panel: pd.DataFrame,
+    feature_cols: list[str],
+    cfg: DiscoveryConfig,
+) -> tuple[dict[int, dict[str, FeatureScore]], int]:
+    """Run `fit_one_lag` for every lag in `cfg.lags`; return scores keyed by lag."""
+    per_lag: dict[int, dict[str, FeatureScore]] = {}
+    last_n_samples = 0
+    for lag in cfg.lags:
+        target_series = forward_target_column(raw_target_ts, cfg.change, cfg.freq, lag)
+        scores, n = fit_one_lag(
+            feature_panel=feature_panel,
+            target_series=target_series,
+            target_kind=raw_target_kind,
+            feature_cols=feature_cols,
+        )
+        per_lag[lag] = scores
+        last_n_samples = n
+    return per_lag, last_n_samples
+
+
 def _aggregate_per_source_lag(
-    scores: dict[str, FeatureScore],
+    per_lag_scores: dict[int, dict[str, FeatureScore]],
     layout: ColumnLayout,
-    target_series_id: str,
+    encoded_target_id: str,
 ) -> dict[tuple[str, int], tuple[float, float]]:
-    """Sum per-column SHAP importance/strength up to `(source_series, lag)`."""
+    """Sum per-column SHAP up to `(source_series, lag)`."""
     bucket: dict[tuple[str, int], list[FeatureScore]] = {}
-    for col, score in scores.items():
-        base, lag_part = col.rsplit("__lag", 1)
-        src = layout.column_to_series.get(base)
-        if src is None or src == target_series_id:
-            continue
-        try:
-            lag = int(lag_part)
-        except ValueError:
-            continue
-        bucket.setdefault((src, lag), []).append(score)
+    for lag, scores in per_lag_scores.items():
+        for col, score in scores.items():
+            src = layout.column_to_series.get(col)
+            if src is None or src == encoded_target_id:
+                continue
+            bucket.setdefault((src, lag), []).append(score)
     return {
         key: (
             float(sum(v.importance for v in vals)),
@@ -252,11 +284,11 @@ def _aggregate_per_source_lag(
 
 
 def _best_lag_per_source(
-    per_lag: dict[tuple[str, int], tuple[float, float]],
+    per_source_lag: dict[tuple[str, int], tuple[float, float]],
 ) -> dict[str, tuple[int, float, float]]:
     """For each source, keep the `(lag, importance, strength)` with max importance."""
     best: dict[str, tuple[int, float, float]] = {}
-    for (src, lag), (imp, strength) in per_lag.items():
+    for (src, lag), (imp, strength) in per_source_lag.items():
         curr = best.get(src)
         if curr is None or imp > curr[1]:
             best[src] = (lag, imp, strength)
@@ -264,19 +296,18 @@ def _best_lag_per_source(
 
 
 def _build_feature_panel(
-    collection: TimeSeriesCollection,
+    feature_collection: TimeSeriesCollection,
     cfg: DiscoveryConfig,
 ) -> tuple[pd.DataFrame, ColumnLayout]:
-    """Resample each series to `cfg.freq` and concatenate.
+    """Resample each (already backward-changed) series to `cfg.freq` and concatenate.
 
-    VECTOR series are always reduced to a single column per timestamp via
-    sign-preserving abs-max pooling along the column axis. Semantically: if
-    any element of the vector has a causal effect at a given lag, the vector
-    as a whole is treated as having that causal effect.
+    VECTOR series collapse to a single column via sign-preserving abs-max
+    pooling along the column axis. Semantically: any column firing implies the
+    vector as a whole is firing.
     """
     frames: list[pd.DataFrame] = []
     column_to_series: dict[str, str] = {}
-    for ts in collection:
+    for ts in feature_collection:
         df = resample_to_grid(ts, cfg.freq)
         if ts.kind is TimeSeriesKind.VECTOR:
             df = _maxpool_vector(df, name=f"{ts.id}__maxpool")
@@ -312,10 +343,9 @@ def _maxpool_vector(df: pd.DataFrame, name: str) -> pd.DataFrame:
 
 def _apply_dowhy_refutation(
     ranked_edges: list[tuple[Edge, str]],
-    target_series_id: str,
-    target_col: str,
+    encoded_target_id: str,
+    raw_target_ts,
     feature_panel: pd.DataFrame,
-    feature_cols: list[str],
     cfg: DiscoveryConfig,
     debug_on: bool,
 ) -> list[Edge]:
@@ -325,32 +355,35 @@ def _apply_dowhy_refutation(
     if not ranked_edges:
         return []
 
-    x_lagged = lagged_columns(feature_panel, feature_cols, cfg.lags)
-    design = pd.concat([x_lagged, feature_panel[[target_col]]], axis=1).dropna()
-    out: list[Edge] = []
     refute_k = min(cfg.dowhy_refute_top_k_per_target, len(ranked_edges))
-
-    for idx, (edge, feature_column) in enumerate(ranked_edges):
+    out: list[Edge] = []
+    for idx, (edge, treatment_col) in enumerate(ranked_edges):
         if idx >= refute_k:
             out.append(edge)
             continue
+        target_series = forward_target_column(raw_target_ts, cfg.change, cfg.freq, edge.lag)
+        outcome_col = f"__outcome_lag{edge.lag}__"
+        design = pd.concat(
+            [feature_panel[[treatment_col]], target_series.rename(outcome_col)],
+            axis=1,
+        ).dropna()
         candidate = CandidateEdge(
             source_series=edge.source,
-            target_series=target_series_id,
+            target_series=encoded_target_id,
             lag=edge.lag,
             importance=edge.importance,
-            feature_column=feature_column,
+            feature_column=treatment_col,
         )
         refutation = refute_candidate(
             candidate=candidate,
             panel=design,
-            treatment_column=feature_column,
-            outcome_column=target_col,
+            treatment_column=treatment_col,
+            outcome_column=outcome_col,
         )
         if refutation is None:
             if debug_on:
                 print(
-                    f"[discover] DROP {edge.source}->{target_series_id} lag={edge.lag} "
+                    f"[discover] DROP {edge.source}->{encoded_target_id} lag={edge.lag} "
                     f"(DoWhy failed/insufficient data)"
                 )
             continue
@@ -360,14 +393,14 @@ def _apply_dowhy_refutation(
                 f"{name}={value:.3f}" for name, value in refutation.scores.items()
             )
             print(
-                f"[discover] DOWHY {edge.source}->{target_series_id} lag={edge.lag} "
+                f"[discover] DOWHY {edge.source}->{encoded_target_id} lag={edge.lag} "
                 f"est={refutation.estimate:+.4f} mean_conf={refuted_edge.confidence:.3f} "
                 f"scores=[{score_str}]"
             )
         if refuted_edge.confidence < cfg.dowhy_confidence_threshold:
             if debug_on:
                 print(
-                    f"[discover] DROP {edge.source}->{target_series_id} lag={edge.lag} "
+                    f"[discover] DROP {edge.source}->{encoded_target_id} lag={edge.lag} "
                     f"(DoWhy conf={refuted_edge.confidence:.3f} < {cfg.dowhy_confidence_threshold:.3f})"
                 )
             continue

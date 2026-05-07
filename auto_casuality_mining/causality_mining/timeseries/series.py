@@ -23,11 +23,12 @@ class TimeSeries:
         id: stable identifier, used as a node id in the causal graph.
         kind: SCALAR, CATEGORICAL, or VECTOR.
         data: pd.Series for scalar/categorical, pd.DataFrame for vector.
-        pre_normalized: if True, every `Normalizer` in a `Pipeline` will
-            pass this series through unchanged. Use this when the values
-            already encode "change" semantics (e.g. an LLM-generated
-            day-over-day report embedding) so the default `Delta` /
-            `LogReturn` / `ZScore` transforms do not double-difference it.
+        pre_normalized: if True, the configured `Change` encoder will pass
+            this series through unchanged when building features. Use this
+            when the values already encode "change" semantics (e.g. an
+            LLM-generated day-over-day report embedding) so the encoder does
+            not double-difference it. Forward-target encoding for such series
+            collapses to a pure time shift.
     """
 
     id: str
@@ -55,7 +56,7 @@ class TimeSeries:
         return 1
 
     def column_names(self) -> list[str]:
-        """Panel column names this series will produce (before lagging)."""
+        """Panel column names this series will produce."""
         if self.kind is TimeSeriesKind.VECTOR:
             return [f"{self.id}__{c}" for c in self.data.columns]
         return [self.id]

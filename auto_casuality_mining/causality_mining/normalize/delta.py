@@ -1,28 +1,42 @@
-"""First-difference (delta) normalization.
+"""Arithmetic-difference change encoder.
 
-Records the change from the previous observation instead of the raw level.
-This is one of the most universally useful normalizations for causal mining
-because levels are usually non-stationary while changes are stationary.
+Records change as `x[b] - x[a]`, the simplest additive change measure. Useful
+when the underlying signal is on a meaningful additive scale (e.g. counts, or
+already-stationary deviations).
+
+For CATEGORICAL inputs, change reduces to a one-hot indicator over the
+`(prev_label, curr_label)` pair (delegated to `transition`).
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 
+from causality_mining.normalize.transition import categorical_backward, categorical_forward
 from causality_mining.timeseries.kind import TimeSeriesKind
 from causality_mining.timeseries.series import TimeSeries
 
 
 @dataclass(frozen=True)
 class Delta:
-    """Replace SCALAR / VECTOR series with their first difference.
-
-    Categorical series are passed through unchanged.
-    """
+    """`Change` encoder using arithmetic differences."""
 
     name: str = "delta"
 
-    def apply(self, ts: TimeSeries) -> TimeSeries:
+    def backward(self, ts: TimeSeries, horizon: int = 1) -> TimeSeries:
+        if horizon < 1:
+            raise ValueError(f"horizon must be >= 1, got {horizon}")
         if ts.kind is TimeSeriesKind.CATEGORICAL:
-            return ts
-        diffed = ts.data.diff().dropna(how="all")
-        return TimeSeries(id=f"{ts.id}__delta", kind=ts.kind, data=diffed)
+            return categorical_backward(ts, horizon, suffix=f"{self.name}_back{horizon}")
+        diffed = (ts.data - ts.data.shift(horizon)).dropna(how="all")
+        return TimeSeries(id=f"{ts.id}__{self.name}_back{horizon}", kind=ts.kind, data=diffed)
+
+    def forward(self, ts: TimeSeries, horizon: int) -> TimeSeries:
+        if horizon < 1:
+            raise ValueError(f"horizon must be >= 1, got {horizon}")
+        if ts.kind is TimeSeriesKind.CATEGORICAL:
+            return categorical_forward(ts, horizon, suffix=f"{self.name}_fwd{horizon}")
+        diffed = (ts.data.shift(-horizon) - ts.data).dropna(how="all")
+        return TimeSeries(id=f"{ts.id}__{self.name}_fwd{horizon}", kind=ts.kind, data=diffed)
+
+    def apply(self, baseline: float, delta: float) -> float:
+        return float(baseline) + float(delta)
