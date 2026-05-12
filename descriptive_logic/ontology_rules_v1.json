@@ -1,0 +1,226 @@
+{
+  "node_id": "root",
+  "name": "Root",
+  "description": "Root ontology node.",
+  "is_leaf": false,
+  "logic_gate": "OR",
+  "children": [
+    {
+      "node_id": "Content_does_not_constitute_financial_advice",
+      "name": "Content does not constitute financial advice",
+      "description": "Content does not constitute financial advice",
+      "is_leaf": false,
+      "logic_gate": "AND",
+      "children": [
+        {
+          "node_id": "no_direct_purchase_instruction",
+          "name": "no_direct_purchase_instruction",
+          "description": "The content contains no direct call to action instructing the audience to buy, sell, or hold a specific security, asset, currency, or financial instrument.",
+          "is_leaf": false,
+          "logic_gate": "AND",
+          "children": [
+            {
+              "node_id": "no_buy_directive_with_specific_instrument",
+              "name": "no_buy_directive_with_specific_instrument",
+              "description": "The text contains no instance where a buy-side directive verb (buy, purchase, acquire, go long on, get into, load up on, add to) is applied to a specifically named financial instrument, security, asset, or currency.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_sell_directive_with_specific_instrument",
+              "name": "no_sell_directive_with_specific_instrument",
+              "description": "The text contains no instance where a sell-side directive verb (sell, dispose, dump, exit, get out of, short, unload, reduce, liquidate) is applied to a specifically named financial instrument, security, asset, or currency.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_hold_directive_with_specific_instrument",
+              "name": "no_hold_directive_with_specific_instrument",
+              "description": "The text contains no instance where a hold directive (hold, keep, retain, maintain position in, stay invested in, don't sell, continue to own) is applied to a specifically named financial instrument, security, asset, or currency.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_recommendation_framing_with_trade_action",
+              "name": "no_recommendation_framing_with_trade_action",
+              "description": "The text contains no sentence where recommendation-modality language (should, recommend, advise, suggest, ought to, must, it is time to) combines a buy, sell, or hold action with a specific named financial instrument.",
+              "is_leaf": true,
+              "children": []
+            }
+          ]
+        },
+        {
+          "node_id": "no_guaranteed_return_claim",
+          "name": "no_guaranteed_return_claim",
+          "description": "The content makes no claim of guaranteed, risk-free, or assured returns on any investment, either explicitly or through language implying certainty of profit.",
+          "is_leaf": false,
+          "logic_gate": "AND",
+          "children": [
+            {
+              "node_id": "absent_guarantee_keywords",
+              "name": "absent_guarantee_keywords",
+              "description": "The text contains none of the explicit guarantee or assurance terms: 'guaranteed', 'risk-free', 'risk free', 'assured return', 'assured profit', 'promised return', 'promised profit', 'no risk', 'zero risk', 'can't lose', 'cannot lose', 'can not lose'.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "absent_definitive_return_statement",
+              "name": "absent_definitive_return_statement",
+              "description": "The text contains no declarative sentence asserting a specific future investment return as a matter of fact (e.g., 'you will earn X %', 'investors will receive Y') rather than framing it as a possibility, target, illustration, or historical example.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "absent_principal_protection_claim",
+              "name": "absent_principal_protection_claim",
+              "description": "The text contains no claim that invested principal or capital is safe, protected, secured, insulated from loss, or guaranteed to be returned in whole.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "absent_risk_denial",
+              "name": "absent_risk_denial",
+              "description": "The text contains no statement that denies, dismisses, or claims the absence of investment risk, downside, or volatility (e.g., 'there is no risk', 'you have nothing to worry about', 'it's impossible to lose money').",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "absent_certainty_modifiers",
+              "name": "absent_certainty_modifiers",
+              "description": "The text contains no adverbs or adverbial phrases that modify return or profit statements with certainty (e.g., 'definitely', 'surely', 'always', 'without fail', 'every time', 'invariably', 'absolutely').",
+              "is_leaf": true,
+              "children": []
+            }
+          ]
+        },
+        {
+          "node_id": "general_educational_scope",
+          "name": "general_educational_scope",
+          "description": "The content is framed as general education, market commentary, news, or informational material rather than actionable investment guidance directed at a specific audience.",
+          "is_leaf": false,
+          "logic_gate": "AND",
+          "children": [
+            {
+              "node_id": "educational_or_journalistic_framing",
+              "name": "educational_or_journalistic_framing",
+              "description": "The content explicitly frames itself using educational, journalistic, or informational markers (e.g., 'educational purposes only', market recaps, definitions of concepts, historical data, news reporting language) rather than advisory or recommendation language.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "general_audience_scope",
+              "name": "general_audience_scope",
+              "description": "The content does not reference the specific financial situation, risk tolerance, investment objectives, or time horizon of a particular audience segment as a basis for recommended action.",
+              "is_leaf": true,
+              "children": []
+            }
+          ]
+        },
+        {
+          "node_id": "conspicuous_non_advisory_disclaimer",
+          "name": "conspicuous_non_advisory_disclaimer",
+          "description": "The content includes a clearly visible disclaimer stating that it does not constitute financial, investment, tax, or legal advice and that readers should consult a qualified professional.",
+          "is_leaf": false,
+          "logic_gate": "AND",
+          "children": [
+            {
+              "node_id": "disclaimer_text_present",
+              "name": "disclaimer_text_present",
+              "description": "The content contains an identifiable disclaimer statement\u2014a sentence or block of text whose purpose is to deny the provision of professional advice.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "disclaims_advice_categories",
+              "name": "disclaims_advice_categories",
+              "description": "The disclaimer explicitly states that the content does not constitute at least one of the following: financial advice, investment advice, tax advice, or legal advice.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "recommends_professional_consultation",
+              "name": "recommends_professional_consultation",
+              "description": "The disclaimer explicitly recommends that readers consult a qualified professional (e.g., financial advisor, attorney, accountant, or tax professional) before acting on the content.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "disclaimer_before_substantive_content",
+              "name": "disclaimer_before_substantive_content",
+              "description": "The disclaimer appears in the document flow before or at the start of the main substantive content, not solely at the end, in a footnote, or in a postscript.",
+              "is_leaf": false,
+              "logic_gate": "AND",
+              "children": [
+                {
+                  "node_id": "disclaimer_present_before_substantive_start",
+                  "name": "disclaimer_present_before_substantive_start",
+                  "description": "The disclaimer text appears at least once at a document position (character offset, paragraph index, or DOM node order) that precedes the start of the first substantive content block, where substantive content is identified as the first section heading or paragraph following any preamble, abstract, or boilerplate front matter.",
+                  "is_leaf": true,
+                  "children": []
+                },
+                {
+                  "node_id": "disclaimer_not_solely_in_document_end_zone",
+                  "name": "disclaimer_not_solely_in_document_end_zone",
+                  "description": "The disclaimer text is not located exclusively within the final structural section or sections of the document. At least one occurrence of the disclaimer falls outside the document's concluding region \u2014 defined as the last contiguous block marked by headings such as 'Conclusion', 'Appendix', 'Afterword', 'Postscript', 'Endnotes', or equivalent, or the final N% of the body text where N is a configurable threshold (e.g., 10%).",
+                  "is_leaf": true,
+                  "children": []
+                }
+              ]
+            },
+            {
+              "node_id": "disclaimer_visually_distinct",
+              "name": "disclaimer_visually_distinct",
+              "description": "The disclaimer is rendered with visual differentiation from the surrounding body text\u2014for example, via bold styling, italics, a bordered or shaded box, or font size not smaller than the primary body text.",
+              "is_leaf": true,
+              "children": []
+            }
+          ]
+        },
+        {
+          "node_id": "no_prediction_of_specific_price_movement",
+          "name": "no_prediction_of_specific_price_movement",
+          "description": "The content contains no specific price target, directional forecast, or timing prediction regarding the value of any named security, asset class, or financial instrument.",
+          "is_leaf": false,
+          "logic_gate": "AND",
+          "children": [
+            {
+              "node_id": "no_numeric_price_target_for_named_instrument",
+              "name": "no_numeric_price_target_for_named_instrument",
+              "description": "The content contains no specific numeric price target \u2014 expressed as an absolute currency amount (e.g., '$150', '\u20ac200', 'target price of 75') or a quantified percentage-change claim (e.g., '30% upside', 'will gain 15%', 'could drop 20%') \u2014 that is explicitly associated with any individually named security, asset class, or financial instrument (e.g., a ticker, ISIN, company name, bond issue, commodity, or index).",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_directional_forecast_for_named_instrument",
+              "name": "no_directional_forecast_for_named_instrument",
+              "description": "The content contains no explicit directional-forecast language \u2014 including terms such as 'will rise', 'going to fall', 'bullish', 'bearish', 'long', 'short', 'outperform', 'underperform', 'rally', 'crash', 'surge', 'plunge', 'uptrend', 'downtrend', or unambiguous synonyms \u2014 that predicts the future value movement of any named security, asset class, or financial instrument.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_time_bound_price_prediction",
+              "name": "no_time_bound_price_prediction",
+              "description": "The content contains no statement that links a price movement or value change (of any named security, asset class, or financial instrument) to a specific temporal boundary \u2014 including calendar dates (e.g., 'by December 31'), relative durations (e.g., 'within 3 months', 'over the next quarter'), event-anchored timeframes (e.g., 'after earnings', 'by the Fed meeting'), or open-ended immediacy claims (e.g., 'tomorrow', 'this week', 'imminent').",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_conditional_price_forecast",
+              "name": "no_conditional_price_forecast",
+              "description": "The content contains no conditional ('if-then' or 'when-then') statement in which the consequent predicts a specific price level, direction, or percentage change for any named security, asset class, or financial instrument \u2014 regardless of whether the antecedent is a market event, economic indicator, policy decision, or other trigger.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_valuation_judgment_implying_price_target",
+              "name": "no_valuation_judgment_implying_price_target",
+              "description": "The content contains no statement that asserts or implies a specific mispricing of a named security, asset class, or financial instrument through quantified valuation language \u2014 such as 'X% undervalued/overvalued', 'trading at a Y% discount/premium to fair value', 'fair value is $Z', 'intrinsic value of $W', 'should be trading at', or 'worth $V' \u2014 which embeds an implicit price target.",
+              "is_leaf": true,
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

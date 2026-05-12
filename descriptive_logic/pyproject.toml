@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "descriptive-logic-doge"
+version = "0.1.0"
+description = "Deterministic Ontology Guardrail Engine for boolean compliance ontologies."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "descriptive_logic" }]
+license = { text = "MIT" }
+dependencies = [
+    "prompt-toolkit>=3.0",
+    "pydantic>=2.7",
+    "pydantic-ai-slim[openai]>=1.0.0",
+    "python-dotenv>=1.0",
+    "rich>=13.7",
+    "typer>=0.12",
+    "z3-solver>=4.12",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.5"]
+
+[project.scripts]
+doge = "doge.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["doge*"]
+exclude = ["tests*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

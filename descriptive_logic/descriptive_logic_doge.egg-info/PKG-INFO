@@ -1,0 +1,88 @@
+Metadata-Version: 2.4
+Name: descriptive-logic-doge
+Version: 0.1.0
+Summary: Deterministic Ontology Guardrail Engine for boolean compliance ontologies.
+Author: descriptive_logic
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: prompt-toolkit>=3.0
+Requires-Dist: pydantic>=2.7
+Requires-Dist: pydantic-ai-slim[openai]>=1.0.0
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: rich>=13.7
+Requires-Dist: typer>=0.12
+Requires-Dist: z3-solver>=4.12
+Provides-Extra: dev
+Requires-Dist: pytest>=7; extra == "dev"
+Requires-Dist: ruff>=0.5; extra == "dev"
+
+# DOGE: Deterministic Ontology Guardrail Engine
+
+DOGE turns vague compliance restrictions into a deterministic boolean ontology and verifies the resulting rulebase with Z3.
+
+## Install
+
+```bash
+cd descriptive_logic
+uv sync --extra dev
+```
+
+DOGE loads `.env` from `descriptive_logic` or any parent folder. Set `OPENAI_API_KEY` there,
+and set `DOGE_LLM_MODEL` if you do not want the default `openai:gpt-4o-mini`.
+
+## Build An Ontology
+
+```bash
+uv run doge.py build -f ontology_rules.json
+```
+
+Use `--offline` to exercise the terminal flow without LLM credentials:
+
+```bash
+uv run doge.py build --offline -f ontology_rules.json
+```
+
+Useful builder commands:
+
+- `/tree` shows the current ontology.
+- `/up` moves to the parent node.
+- `/leaf` marks the current node as terminal.
+- `/save` writes the current state.
+- `/exit` saves and exits.
+
+## Verify An Ontology
+
+```bash
+uv run doge.py verify -f ontology_rules.json
+```
+
+The verifier accepts the root-node schema from the design document. It also accepts an extended rulebase form with additional compliance constraints:
+
+```json
+{
+  "root": {
+    "node_id": "rule_001",
+    "name": "Financial Advice Block",
+    "description": "Any content constituting personalized financial advice.",
+    "is_leaf": false,
+    "logic_gate": "OR",
+    "children": []
+  },
+  "constraints": [
+    {
+      "rule_id": "Rule_042",
+      "kind": "implication",
+      "antecedents": ["Mentions_Internal_Fund"],
+      "consequent": "Approve_For_Publish"
+    },
+    {
+      "rule_id": "Rule_088",
+      "kind": "mutex",
+      "terms": ["Approve_For_Publish", "Reject"]
+    }
+  ]
+}
+```
+
+Supported compliance rule kinds are `implication`, `mutex`, `requires`, and `forbids`.

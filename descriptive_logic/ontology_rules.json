@@ -1,0 +1,224 @@
+{
+  "node_id": "root",
+  "name": "Root",
+  "description": "Root ontology node.",
+  "is_leaf": false,
+  "logic_gate": "OR",
+  "children": [
+    {
+      "node_id": "no_individualised_financial_advice",
+      "name": "no individualised financial advice",
+      "description": "no individualised financial advice",
+      "is_leaf": false,
+      "logic_gate": "AND",
+      "children": [
+        {
+          "node_id": "no_recipient_specific_reference",
+          "name": "no_recipient_specific_reference",
+          "description": "Content contains no reference to the recipient's personal financial circumstances (e.g., income level, asset holdings, debt obligations, tax bracket, net worth, or employment status).",
+          "is_leaf": false,
+          "logic_gate": "AND",
+          "children": [
+            {
+              "node_id": "no_income_reference",
+              "name": "no_income_reference",
+              "description": "Content contains no mention of the recipient's income level, salary, wages, earnings, bonus income, or any numeric figure presented as the recipient's own income.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_asset_reference",
+              "name": "no_asset_reference",
+              "description": "Content contains no mention of the recipient's asset holdings, including real estate owned, investment accounts, retirement account balances, savings, or other property values attributable to the recipient.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_debt_reference",
+              "name": "no_debt_reference",
+              "description": "Content contains no mention of the recipient's debt obligations, including mortgage balances, loan amounts, credit card debt, student loan debt, or any liability explicitly tied to the recipient.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_tax_bracket_reference",
+              "name": "no_tax_bracket_reference",
+              "description": "Content contains no mention of the recipient's tax bracket, marginal tax rate, effective tax rate, filing status, or tax liability amount attributable to the recipient.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_net_worth_reference",
+              "name": "no_net_worth_reference",
+              "description": "Content contains no mention of the recipient's net worth, whether stated as a specific figure, a range, or a formula combining the recipient's assets minus liabilities.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_employment_status_reference",
+              "name": "no_employment_status_reference",
+              "description": "Content contains no mention of the recipient's employment status, occupation, employer identity, employment history, self-employment status, retirement status, or unemployment status.",
+              "is_leaf": true,
+              "children": []
+            }
+          ]
+        },
+        {
+          "node_id": "no_personalized_recommendation",
+          "name": "no_personalized_recommendation",
+          "description": "Content contains no directive or suggestive statement that recommends a specific financial product, service, or course of action using second-person language (e.g., 'you should invest in...', 'we recommend you...', 'based on your situation...').",
+          "is_leaf": false,
+          "logic_gate": "AND",
+          "children": [
+            {
+              "node_id": "no_second_person_directive_modal",
+              "name": "no_second_person_directive_modal",
+              "description": "Content contains no sentence in which a second-person pronoun ('you', 'your', 'you're', 'yours') co-occurs within the same clause as a directive modal verb ('should', 'must', 'ought to', 'need to', 'have to') and a financial-action term drawn from a predefined lexicon (e.g., invest, buy, sell, purchase, allocate, transfer, contribute, withdraw, sign up, enroll).",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_first_person_plural_recommendation",
+              "name": "no_first_person_plural_recommendation",
+              "description": "Content contains no sentence in which a first-person-plural recommendation phrase ('we recommend', 'we suggest', 'we advise', 'we urge', 'our recommendation is') co-occurs with a second-person pronoun ('you', 'your', 'you're', 'yours') within the same sentence.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_personal_circumstance_conditioning",
+              "name": "no_personal_circumstance_conditioning",
+              "description": "Content contains no phrase that premises a financial suggestion on the reader's individual circumstances, matching any of the following patterns: 'based on your', 'given your', 'considering your', 'in light of your', 'for your situation', 'for your needs', 'for someone in your', 'tailored to your', 'specific to your', 'depending on your'.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_named_product_with_second_person",
+              "name": "no_named_product_with_second_person",
+              "description": "Content contains no sentence in which a recognized financial-product identifier (ticker symbol, ISIN, fund name, or branded financial-service name from a curated financial-entity lexicon) co-occurs with any second-person pronoun ('you', 'your', 'you're', 'yours').",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_suggestive_second_person_steering",
+              "name": "no_suggestive_second_person_steering",
+              "description": "Content contains no sentence in which a suggestive steering phrase ('you might consider', 'you may want to', 'you could look at', 'it may be worth', 'worth considering', 'you might explore', 'you could try') co-occurs with a financial term from a predefined financial-entity or financial-action lexicon.",
+              "is_leaf": true,
+              "children": []
+            }
+          ]
+        },
+        {
+          "node_id": "no_suitability_assessment",
+          "name": "no_suitability_assessment",
+          "description": "Content contains no statement evaluating the appropriateness, suitability, or fitness of any financial product, strategy, or service for the recipient specifically.",
+          "is_leaf": false,
+          "logic_gate": "AND",
+          "children": [
+            {
+              "node_id": "no_suitability_term",
+              "name": "no_suitability_term",
+              "description": "Content contains no explicit suitability-classifying adjective or phrase (e.g., 'suitable', 'appropriate', 'fitting', 'suited', 'right for', 'well-suited') in connection with any financial product, strategy, or service and the recipient.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_needs_match_claim",
+              "name": "no_needs_match_claim",
+              "description": "Content contains no claim that a product, strategy, or service 'meets', 'matches', 'addresses', 'aligns with', 'corresponds to', or 'fulfills' the recipient's needs, objectives, goals, circumstances, or requirements.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_circumstance_linked_assertion",
+              "name": "no_circumstance_linked_assertion",
+              "description": "Content contains no statement connecting any feature or characteristic of a financial product, strategy, or service specifically to a stated or implied personal attribute of the recipient (e.g., age, income, risk tolerance, investment horizon, financial objective, employment status, or family situation).",
+              "is_leaf": true,
+              "children": []
+            }
+          ]
+        },
+        {
+          "node_id": "no_solicitation_of_personal_data",
+          "name": "no_solicitation_of_personal_data",
+          "description": "Content does not request, prompt for, or reference the recipient's individual financial data (e.g., income, risk tolerance, financial goals, existing portfolio) in order to generate or refine a recommendation.",
+          "is_leaf": false,
+          "logic_gate": "AND",
+          "children": [
+            {
+              "node_id": "no_explicit_income_request",
+              "name": "no_explicit_income_request",
+              "description": "The content contains no direct request, prompt, or solicitation asking the recipient to disclose salary, wages, income, earnings, or compensation figures.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_risk_tolerance_prompt",
+              "name": "no_risk_tolerance_prompt",
+              "description": "The content contains no language prompting the recipient to describe their willingness to accept investment risk, comfort with potential losses, risk appetite, or risk profile.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "no_financial_goals_solicitation",
+              "name": "no_financial_goals_solicitation",
+              "description": "The content contains no request for the recipient to disclose personal financial objectives such as retirement targets, savings milestones, purchase goals, or wealth accumulation aims.",
+              "is_leaf": true,
+              "children": []
+            }
+          ]
+        },
+        {
+          "node_id": "generic_audience_framing",
+          "name": "generic_audience_framing",
+          "description": "Content includes explicit language indicating it is general informational or educational material intended for a broad audience (e.g., 'for informational purposes only,' 'not financial advice,' 'does not consider individual circumstances,' or similar disclaimer).",
+          "is_leaf": false,
+          "logic_gate": "OR",
+          "children": [
+            {
+              "node_id": "has_informational_purpose_disclaimer",
+              "name": "has_informational_purpose_disclaimer",
+              "description": "Text contains a phrase matching 'for informational purposes only', 'for general informational purposes', 'solely for informational purposes', or close variants thereof.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "has_not_financial_advice_disclaimer",
+              "name": "has_not_financial_advice_disclaimer",
+              "description": "Text contains an explicit statement that the content does not constitute financial advice, investment advice, or professional advice (e.g., 'not financial advice', 'does not constitute investment advice', 'this is not financial advice').",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "has_individual_circumstances_disclaimer",
+              "name": "has_individual_circumstances_disclaimer",
+              "description": "Text contains language stating the content does not take into account individual circumstances, personal financial situations, specific needs, or particular objectives of any reader.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "has_educational_framing",
+              "name": "has_educational_framing",
+              "description": "Text explicitly frames itself as educational material using phrases such as 'for educational purposes only', 'educational content', 'for general education', or 'intended as educational material'.",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "has_general_audience_indicator",
+              "name": "has_general_audience_indicator",
+              "description": "Text contains language indicating it is intended for a broad or general audience (e.g., 'for a general audience', 'intended for general readership', 'not directed at any specific person', 'for the public').",
+              "is_leaf": true,
+              "children": []
+            },
+            {
+              "node_id": "has_no_reliance_disclaimer",
+              "name": "has_no_reliance_disclaimer",
+              "description": "Text includes a statement that readers should not rely solely on the content for making decisions, or that the information is not a substitute for professional consultation (e.g., 'do not rely on this information', 'not a substitute for professional advice', 'seek independent advice').",
+              "is_leaf": true,
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

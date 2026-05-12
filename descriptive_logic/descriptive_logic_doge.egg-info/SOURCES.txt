@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+descriptive_logic_doge.egg-info/PKG-INFO
+descriptive_logic_doge.egg-info/SOURCES.txt
+descriptive_logic_doge.egg-info/dependency_links.txt
+descriptive_logic_doge.egg-info/entry_points.txt
+descriptive_logic_doge.egg-info/requires.txt
+descriptive_logic_doge.egg-info/top_level.txt
+doge/__init__.py
+doge/cli.py
+doge/env.py
+doge/models.py
+doge/ontologist.py
+doge/state_manager.py
+doge/validator.py
+tests/test_state_manager.py
+tests/test_validator.py
