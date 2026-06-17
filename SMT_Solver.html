@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SMT Solver Guardrail — Presentation</title>
+<style>
+  :root{
+    --bg:#ffffff; --panel:#f6f7f8; --ink:#222222; --muted:#6b7177;
+    --accent:#db0011;            /* HSBC red */
+    --accent2:#a30009;
+    --good:#007a33; --bad:#db0011; --warn:#b25900;
+    --line:#e2e5e8; --code:#f4f5f6; --codeink:#1f2933;
+    --mono:'SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
+    --sans:'Helvetica Neue',Arial,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);overflow:hidden}
+  .deck{height:100vh;width:100vw;position:relative}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+    padding:8vh 7vw 6vh;animation:fade .35s ease}
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h1{font-size:3.0rem;line-height:1.1;margin:0 0 .3em;color:#1a1a1a;font-weight:800}
+  h2{font-size:2.0rem;margin:0 0 .6em;color:#1a1a1a;font-weight:700;border-left:6px solid var(--accent);padding-left:.5em}
+  h3{font-size:1.12rem;margin:1.0em 0 .3em;color:var(--accent);font-weight:700;letter-spacing:.01em}
+  p,li{font-size:1.18rem;line-height:1.55;color:var(--ink)}
+  .sub{color:var(--muted);font-size:1.3rem}
+  ul{margin:.2em 0 .2em 1.1em}
+  li{margin:.35em 0}
+  .tag{display:inline-block;background:#fdeaea;color:var(--accent);border:1px solid var(--accent);
+    border-radius:999px;padding:.15em .9em;font-size:.85rem;letter-spacing:.05em;margin-bottom:1em;font-weight:700}
+  code,.mono{font-family:var(--mono)}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:1em 1.2em;
+    overflow:auto;font-family:var(--mono);font-size:.95rem;line-height:1.5;color:var(--codeink)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:1.6em;align-items:start}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:1.1em 1.3em;
+    box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .pill{font-size:.8rem;padding:.1em .6em;border-radius:6px;font-weight:700;white-space:nowrap}
+  .pass{background:#e7f4ec;color:var(--good);border:1px solid var(--good)}
+  .fail{background:#fdeaea;color:var(--bad);border:1px solid var(--bad)}
+  .warnp{background:#fdf3e3;color:var(--warn);border:1px solid var(--warn)}
+  .flow{display:flex;flex-wrap:wrap;gap:.5em;align-items:center;font-family:var(--mono);font-size:1.0rem}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.5em .8em}
+  .arrow{color:var(--accent);font-size:1.3rem;font-weight:700}
+  table{border-collapse:collapse;width:100%;font-size:1.02rem}
+  th,td{border:1px solid var(--line);padding:.5em .7em;text-align:left;vertical-align:top}
+  th{background:var(--accent);color:#fff;font-weight:700}
+  tr:nth-child(even) td{background:#fafbfc}
+  .k{color:var(--accent);font-weight:700} .g{color:var(--good)} .r{color:var(--bad)} .m{color:var(--muted)}
+  .hud{position:fixed;bottom:14px;right:20px;color:var(--muted);font-family:var(--mono);font-size:.85rem;z-index:10}
+  .bar{position:fixed;top:0;left:0;height:4px;background:var(--accent);z-index:12;transition:width .3s}
+  .nav{position:fixed;bottom:12px;left:24px;color:var(--muted);font-size:.8rem;z-index:10}
+  .center{align-items:center;text-align:center}
+  .small{font-size:1.0rem}
+  .footnote{color:var(--muted);font-size:.95rem;margin-top:1em}
+  b.good{color:var(--good)} b.bad{color:var(--bad)} b.k{color:var(--accent)}
+  /* HSBC brand mark */
+  .brand{position:fixed;top:18px;left:26px;display:flex;align-items:center;z-index:11}
+  .brandlogo{height:30px;width:auto;display:block}
+  .biglogo{display:flex;justify-content:center;margin-bottom:.8em}
+  .biglogo .hsbclogo{height:90px;width:auto}
+  .redrule{height:4px;width:120px;background:var(--accent);margin:1.2em auto 0;border-radius:2px}
+  /* vertical workflow */
+  .wf{display:flex;flex-direction:column;gap:.34em;margin-top:.2em}
+  .wfstep{display:flex;gap:.9em;align-items:flex-start;background:var(--panel);
+    border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;
+    padding:.5em .9em;font-size:1.04rem;line-height:1.4}
+  .wfnum{font-weight:800;color:var(--accent);font-size:1.35rem;line-height:1.2;min-width:1.1em;text-align:center}
+  .wfwhy{color:var(--muted);font-size:.92rem;margin-top:.12em}
+  /* raw-JSON disclosure */
+  .raw{margin-top:.6em}
+  .raw summary{cursor:pointer;color:var(--accent);font-weight:700;font-size:.82rem;list-style:none;user-select:none}
+  .raw summary::-webkit-details-marker{display:none}
+  .raw summary::before{content:"▸ raw JSON response"}
+  .raw[open] summary::before{content:"▾ raw JSON response"}
+  .raw summary span{display:none}
+  .raw pre{margin-top:.4em;font-size:.74rem;line-height:1.45;max-height:240px}
+  /* verbatim test-case input + verdict */
+  .tcin{padding:.55em .9em}
+  .tcin p{font-size:.84rem;line-height:1.4;margin:.3em 0}
+  .tcin b{color:var(--accent)}
+  .tcv{font-size:.92rem;margin:.6em 0 .2em}
+  .tcv .mono{font-size:.84rem}
+  /* highlight the contradicted spans */
+  .hl{background:#fff1a8;border-bottom:2px solid var(--accent);border-radius:2px;padding:0 .12em;font-weight:600}
+  /* who-does-it badges */
+  .who{display:inline-block;font-size:.66rem;font-weight:800;letter-spacing:.04em;padding:.05em .55em;border-radius:999px;margin-left:.5em;vertical-align:middle;color:#fff}
+  .who.llm{background:#1f6feb}
+  .who.z3{background:var(--accent)}
+  .who.code{background:#8a939c}
+  .legend{font-size:.85rem;color:var(--muted);margin:.1em 0 .5em}
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide active center">
+    <h1>SMT Solver Guardrail</h1>
+    <p class="sub">A FastAPI service that checks whether LLM-generated content is <b class="k"> logically consistent </b> with its source material and optional hand-authored business rules,
+      by compiling natural-language claims into a strongly-typed description-logic IR and discharging them with the <b class="k">Z3</b> SMT solver.</p>
+    <div class="redrule"></div>
+
+  </section>
+
+  <!-- Topic & goal -->
+  <section class="slide">
+    <h2>Topic &amp; goal</h2>
+    <p class="sub">The project answers <b>one question:</b></p>
+    <div class="card" style="border-left:6px solid var(--accent)">
+      <p style="font-size:1.35rem;margin:.2em 0">"An LLM generated some text. Is it <b class="k">logically consistent</b> with the source material it was supposed to be faithful to, and not violating optional business rules?"</p>
+    </div>
+
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <h2>The problem</h2>
+    <p>In the case of an LLM generating a stock-news article. Is it <b>faithful</b> to the source data and <b>compliant</b> with policy?</p>
+    <ul>
+      <li><b class="bad">Factual drift</b> — the article says revenue is HK$5.0bn; the filing says HK$4.5bn.</li>
+      <li><b class="bad">Policy breach</b> — the article issues a "STRONG BUY" a compliance rule forbids.</li>
+    </ul>
+    <p>We want a guardrail that answers two questions precisely:</p>
+    <ul>
+      <li>Is the input <b class="k">logically consistent</b> with the grounding + rules?</li>
+      <li>If not, <b class="k">which exact sentences</b> conflict, and <b class="k">why</b>?</li>
+    </ul>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <h2>Core idea</h2>
+    <p class="sub">The LLM <b>translates</b>; the solver <b>decides</b>.</p>
+    <div class="cols">
+      <div class="card">
+        <h3>LLM does the fuzzy part</h3>
+        <p>Reads messy natural language and lowers each sentence into a small, strongly-typed logical form, the Intermediate Representation (IR).</p>
+      </div>
+      <div class="card">
+        <h3>Z3 does the rigorous part</h3>
+        <p>Given the typed symbols, the Satisfiability Modulo Theories(SMT) solver <b>proves</b> whether they(Input, Grounding, and Manual_logic) can all hold at once -> if they can, the text is <b class="good">consistent</b>; if not, it's <b class="bad">inconsistent</b>.</p>
+      </div>
+    </div>
+    <p class="footnote">Z3 is an open-source SMT solver from Microsoft Research — source: <a href="https://github.com/Z3Prover/z3" target="_blank" rel="noopener">github.com/Z3Prover/z3</a></p>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <h2>The pipeline</h2>
+    <p class="sub" style="font-size:1.04rem;margin:.1em 0 .35em">A solver can't read Natural Language — so we translate both stories into the <b>same tidy facts</b>, then let it check if they can all be true.</p>
+    <p class="legend"><span class="who llm">LLM</span> language model &nbsp;·&nbsp; <span class="who z3">Z3</span> the solver &nbsp;·&nbsp; <span class="who code">CODE</span> plain orchestration</p>
+    <div class="wf">
+      <div class="wfstep"><div class="wfnum">①</div><div><b>Agree on a shared dictionary</b> <span class="who llm">LLM</span> <span class="m">(signature)</span> — fix the exact words to use, so both texts say <span class="mono">revenue_of(acme)</span> instead of "sales" in one and "revenue" in the other.<div class="wfwhy"> Two sentences can only be compared if they use the <i>same word</i>.</div></div></div>
+      <div class="wfstep"><div class="wfnum">②</div><div><b>Rewrite each sentence as one tidy fact</b> <span class="who llm">LLM</span> <span class="m">(claim)</span> — "Q2 revenue was $5 billion" becomes <span class="mono">revenue_of(acme) = 5.0</span>.<div class="wfwhy">The solver understands tidy facts, not prose.</div></div></div>
+      <div class="wfstep"><div class="wfnum">③</div><div><b>Put every fact in one pile</b> <span class="who code">CODE</span> <span class="m">(union)</span> — the article's facts + the source's facts + the rules, all together.<div class="wfwhy">Facts can only clash if they sit in the same place.</div></div></div>
+      <div class="wfstep"><div class="wfnum">④</div><div><b>Sanity-check the facts</b> <span class="who code">CODE</span> <span class="m">(type-check)</span> — reject nonsense like <span class="mono">revenue = "blue"</span> with a clear error.<div class="wfwhy">Catch mistakes early instead of confusing the solver later.</div></div></div>
+      <div class="wfstep"><div class="wfnum">⑤</div><div><b>Hand the facts to the solver</b> <span class="who code">CODE</span> <span class="who z3">Z3</span> <span class="m">(compile → Z3)</span> — translate them into its language, tagging each so we can point back to the original sentence.<div class="wfwhy">The solver does the rigorous logic we can't reliably do by eye.</div></div></div>
+      <div class="wfstep"><div class="wfnum">⑥</div><div><b>Ask: can all the facts be true at once?</b> <span class="who z3">Z3</span> <span class="m">(solve)</span> — the solver answers SAT → <b class="good">consistent</b>, UNSAT → <b class="bad">inconsistent </b>, or Unkown → <b class="unknown"> reported honestly.<div class="wfwhy">That SAT/UNSAT/Unkown is exactly the question we set out to answer.</div></div></div>
+      <div class="wfstep"><div class="wfnum">⑦</div><div><b>Show the smallest clash(Minimal core), in natural language</b> <span class="who z3">Z3</span> <span class="who llm">LLM</span> <span class="m">(core + explanation)</span> — pick out just the few sentences that are actually mutually contradicted, and say why.<div class="wfwhy">"inconsistent" is useless; "these two revenue figures disagree" is actionable.</div></div></div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <h2>Pillar 1 — the shared signature</h2>
+    <p>A contradiction is only detectable if <b>both extractions use the same symbol.</b></p>
+    <div class="cols">
+      <div class="card">
+        <h3>Without it</h3>
+        <p>input: <span class="mono">ceo_is_john</span><br>grounding: <span class="mono">chief_exec_is_jane</span></p>
+        <p class="m">Disjoint vocabularies → never collide → miss.</p>
+      </div>
+      <div class="card">
+        <h3>With it</h3>
+        <p>both → <span class="mono">ceo_of(company)</span></p>
+        <p class="g">One symbol, two values → clean contradiction.</p>
+      </div>
+    </div>
+    <p class="footnote">So extraction is <b>two-stage</b>: first read <i>both documents AND the manual rules</i> to mint one canonical signature; then extract claims constrained to it (no inventing symbols).</p>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <h2>Pillar 2 — the type system</h2>
+    <p>One uninterpreted sort <span class="mono">Entity</span> for all individuals. On top of it:</p>
+    <table>
+      <tr><th>Construct</th><th>Z3 shape</th><th>Buys you</th></tr>
+      <tr><td><b class="k">Concept</b></td><td><span class="mono">Entity → Bool</span></td><td>unary class, e.g. <span class="mono">gives_advice(x)</span></td></tr>
+      <tr><td><b class="k">Role</b></td><td><span class="mono">Entity × Entity → Bool</span></td><td>binary relation, e.g. <span class="mono">listed_on(a,b)</span></td></tr>
+      <tr><td><b class="k">Attribute</b></td><td><span class="mono">Entity → V</span></td><td><b>functionality is free</b></td></tr>
+      <tr><td><b class="k">Enum</b></td><td><span class="mono">EnumSort</span></td><td>clean closed-set contradictions</td></tr>
+    </table>
+    <p class="footnote">Because attributes are <b>functions</b>, <span class="mono">revenue(acme)=5 ∧ revenue(acme)=4.5</span> is <b class="bad">UNSAT for free</b> — no extra axioms. Equality is split by sort (<span class="mono">compare / enum_eq / func_eq / equal</span>) so the LLM can't conflate categories.</p>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <h2>From "UNSAT" to a useful answer</h2>
+    <ul>
+      <li><b class="k">Claim tracking</b> — each claim is asserted under a tracking literal named by its <span class="mono">id</span>, so Z3's <span class="mono">unsat_core()</span> hands back <i>exactly which claim ids</i> clash.</li>
+      <li><b class="k">Minimal Unsatisfiable Subset(MUS) minimization</b> — Z3's raw core can carry passengers; a deletion loop drops every non-essential claim, leaving a <b>locally minimal</b> core where <i>every</i> member is necessary. No innocent sentence is blamed.</li>
+      <li><b class="k">Iterate</b> — drop a core member and re-check to surface <i>multiple independent</i> conflicts (factual + policy in one run).</li>
+      <li><b class="k">Explain</b> — a deterministic renderer is the source of truth; an LLM optionally paraphrases the <i>already-proven</i> core (never adds facts).</li>
+    </ul>
+  </section>
+
+  <!-- 8 · Test Cases divider -->
+  <section class="slide center">
+    <h2 style="border:none;padding:0">Test Cases</h2>
+    <p class="sub">Real runs on stock-news articles generated by LLM— each checked against its source and an SFC rule.</p>
+    
+  </section>
+
+
+  <!-- 9 · Test Case 1 — contradicted figure -->
+  <section class="slide">
+    <h2>Test Case 1 — Factual Drift </h2>
+    <div class="card tcin">
+      <p><b>input_content:</b> "Shares of SinoGreen Energy Group Limited (09876) climbed 2% today after the company reported a first-half net profit of <span class="hl">HK$3.1 billion</span>, up from HK$2.5 billion a year earlier. Revenue rose 24% year-on-year to HK$10.1 billion, driven by strong demand in the renewable sector. The board declared an interim dividend of HK$0.25 per share and reaffirmed its full-year guidance."</p>
+      <p><b>grounding_content:</b> "In its official announcement, SinoGreen Energy Group Limited (09876) reported a first-half net profit of <span class="hl">HK$2.4 billion</span>, compared with HK$2.5 billion in the same period last year. Revenue increased 24% to HK$10.1 billion, driven by strong demand in the renewable sector. The board declared an interim dividend of HK$0.25 per share and maintained its full-year guidance."</p>
+      <p><b>manual_logic:</b> "Disclosed financial figures must match the company's audited or announced results; any discrepancy constitutes misleading information in breach of SFC Code of Conduct para 16.5 and SFO Part XIV market misconduct provisions."</p>
+    </div>
+    <p class="tcv"><span class="pill fail">CONFLICT FOUND</span> &nbsp; <b>contradicting_claim_ids:</b> <span class="mono">input::c2, grounding::c2</span></p>
+    <p class="small m" style="margin:.2em 0 .35em">"The input claims SinoGreen's first-half net profit was HK$3.1 billion, while the grounding source states it was HK$2.4 billion. Both cannot be true simultaneously, since a single company cannot have two different net profit figures for the same period."</p>
+    <details class="raw"><summary><span>raw</span></summary><pre>{
+  "consistent": false,
+  "status": "unsat",
+  "contradicting_claim_ids": ["input::c2", "grounding::c2"],
+  "contradicting_claims": [
+    { "id": "input::c2", "source": "input",
+      "text": "SinoGreen's first-half net profit was HK$3.1 billion",
+      "formula": "first_half_net_profit_hkdbn(sino_green…) == 3.1" },
+    { "id": "grounding::c2", "source": "grounding",
+      "text": "SinoGreen … reported a first-half net profit of HK$2.4 billion",
+      "formula": "first_half_net_profit_hkdbn(sino_green…) == 2.4" }
+  ],
+  "explanation": { "summary":
+    "The input claims that SinoGreen's first-half net profit was HK$3.1
+     billion, while the grounding source states it was HK$2.4 billion.
+     Both cannot be true simultaneously, since a single company cannot
+     have two different net profit figures for the same period." }
+}</pre></details>
+    <p class="footnote small">file: test_cases/1/response_case1.json</p>
+  </section>
+
+  <!-- 11 · Test Case 2 — violating regulation policy -->
+  <section class="slide">
+    <h2>Test Case 2 — Policy Breach </h2>
+    <div class="card tcin">
+      <p><b>input_content:</b> "Our research team initiates coverage of Windpeak Energy Holdings Limited (8765.HK) with a <span class="hl">STRONG BUY rating</span>. The company reported FY2025 revenue growth of 8% to HK$5.6 billion and a net profit margin of 12%, driven by expanding renewable energy projects. Given its robust balance sheet with HK$1.2 billion in cash and zero debt, <span class="hl">we believe the stock offers 25% upside. Investors should accumulate shares</span> ahead of the upcoming dividend declaration."</p>
+      <p><b>grounding_content:</b> "Windpeak Energy Holdings Limited (8765.HK) announced FY2025 revenue of HK$5.6 billion, an 8% increase year-on-year, and a net profit margin of 12%. The company holds HK$1.2 billion in cash with no debt on its balance sheet. The board proposed a final dividend of HK$0.10 per share.</p>
+      <p><b>manual_logic:</b> "The publication <span class="hl">must not issue financial advice, ratings, or buy/sell/hold recommendations</span> on any specific security."</p>
+    </div>
+    <p class="tcv"><span class="pill fail">CONFLICT FOUND</span> &nbsp; <b>contradicting_claim_ids:</b> <span class="mono">input::c2, input::c12, manual::rule_0</span></p>
+    <p class="small m" style="margin:.2em 0 .35em">"The input claims both that the article issues a rating on the security [c2] and that it provides financial advice by recommending accumulation of shares [c12]. However, the manual rule [rule_0] requires that the article do neither. Since the input asserts exactly what the manual forbids, the set is mutually contradictory."</p>
+    <details class="raw"><summary><span>raw</span></summary><pre>{
+  "consistent": false,
+  "status": "unsat",
+  "contradicting_claim_ids": ["input::c12", "manual::rule_0", "input::c2"],
+  "contradicting_claims": [
+    { "id": "input::c2",  "source": "input",
+      "text": "Article issues a rating on the security",
+      "formula": "issues_rating(article)" },
+    { "id": "input::c12", "source": "input",
+      "text": "Article provides financial advice (accumulate shares)",
+      "formula": "issues_financial_advice(article)" },
+    { "id": "manual::rule_0", "source": "manual",
+      "text": "Article must not issue rating, recommendations, or financial advice…",
+      "formula": "¬ issues_rating(article) ∧ ¬ issues_financial_advice(article)" }
+  ],
+  "explanation": { "summary":
+    "The input asserts the article issues a rating [c2] and gives financial
+     advice [c12]; the manual rule [rule_0] forbids both. The input asserts
+     exactly what the manual forbids, so the set is mutually contradictory." }
+}</pre></details>
+    <p class="footnote small">file: test_cases/2/response_case2.json</p>
+  </section>
+
+  <!-- 9 · Test Case 3 — figure contradicton + violating regulation policy -->
+  <section class="slide">
+    <h2>Test Case 3 — Factual Drift &amp; Policy Breach</h2>
+    <div class="card tcin">
+      <p><b>input_content:</b> "Acme Corp (ACME) reported second-quarter revenue of <span class="hl">$5.0 billion</span>, up 12% year over year. Given these strong results, <span class="hl">you should buy ACME shares for your retirement portfolio.</span>"</p>
+      <p><b>grounding_content:</b> "Acme Corp Q2 revenue was <span class="hl">$4.5 billion</span>, a 12% increase year over year. Acme is listed on the NYSE under the ticker ACME."</p>
+      <p><b>manual_logic:</b> "The article <span class="hl">must not give personalized financial advice</span>."</p>
+    </div>
+    <p class="tcv"><span class="pill fail">CONFLICT FOUND</span> &nbsp; <b>contradicting_claim_ids:</b> <span class="mono">input::c2, grounding::c1, input::c4, manual::rule_0</span></p>
+    <p class="small m" style="margin:.2em 0 .35em">"Contradictory for two independent reasons. (1) Input c4 says the article gives personalized advice (buy ACME for retirement), which violates manual rule_0 forbidding it. (2) Input c2 states Q2 revenue was $5.0bn, but grounding c1 reports $4.5bn — the same quantity cannot hold both values."</p>
+    <details class="raw"><summary><span>raw</span></summary><pre>{
+  "consistent": false,
+  "status": "unsat",
+  "contradicting_claim_ids": ["input::c4", "manual::rule_0", "input::c2", "grounding::c1"],
+  "contradicting_claims": [
+    { "id": "input::c4", "source": "input",
+      "text": "The article gives personalized financial advice (buy ACME for retirement).",
+      "formula": "gives_personalized_financial_advice(acme)" },
+    { "id": "manual::rule_0", "source": "manual",
+      "text": "The article must not give personalized financial advice.",
+      "formula": "¬ gives_personalized_financial_advice(acme)" },
+    { "id": "input::c2", "source": "input",
+      "text": "Acme Corp reported Q2 revenue of $5.0 billion.",
+      "formula": "q2_revenue_usd_billions(acme) == 5" },
+    { "id": "grounding::c1", "source": "grounding",
+      "text": "Acme Corp Q2 revenue was $4.5 billion.",
+      "formula": "q2_revenue_usd_billions(acme) == 4.5" }
+  ],
+  "explanation": { "summary":
+    "Contradictory for two independent reasons: (1) c4 gives personalized
+     advice, which manual rule_0 forbids; (2) c2 says Q2 revenue == 5.0
+     while grounding c1 says == 4.5 — one quantity cannot hold both." }
+}</pre></details>
+    <p class="footnote small">file: test_cases/3/response_case3.json</p>
+  </section>
+  <!-- 12 · Test Case 4 — Lotus -->
+  <section class="slide">
+    <h2>Test Case 4 — Policy Breach Cont'd </h2>
+    <div class="card tcin">
+      <p><b>input_content:</b> "Lotus BioPharma Holdings (9123.HK) shares surged 3.4% today after we raised our target price to HK$5.80. <span class="hl">We currently hold a long position of 2.1 million shares in Lotus BioPharma ourselves.</span> <span class="hl">No conflict of interest is being disclosed to readers.</span> Investors should consider building positions ahead of an expected product trial update next quarter."</p>
+      <p><b>grounding_content:</b> "Lotus BioPharma Holdings (9123.HK) reported H1 2026 revenue of HK$1.2 billion, an 18% increase year-on-year. The company expects to commence Phase II trials of its new oncology drug LX-101 in Q3 2026. Net profit margin widened to 12.5% from 10.8% in the prior year. The board declared an interim dividend of HK$0.12 per share."</p>
+      <p><b>manual_logic:</b> "<span class="hl">If the publishing firm holds a position in the security, the article must include a clear, prominent disclosure of that conflict of interest</span>, consistent with SFC Code of Conduct paragraph 16."</p>
+    </div>
+    <p class="tcv"><span class="pill fail">CONFLICT FOUND</span> &nbsp; <b>contradicting_claim_ids:</b> <span class="mono">input::c3, input::c4, manual::rule_0</span></p>
+    <p class="small m" style="margin:.2em 0 .35em">"The input states the publishing firm holds a position in Lotus BioPharma [c3], yet also that the article discloses no conflict of interest [c4]. This violates the manual rule, which requires that whenever the firm holds such a position, the article must disclose that conflict."</p>
+    <details class="raw"><summary><span>raw</span></summary><pre>{
+  "consistent": false,
+  "status": "unsat",
+  "contradicting_claim_ids": ["input::c3", "input::c4", "manual::rule_0"],
+  "contradicting_claims": [
+    { "id": "input::c3", "source": "input",
+      "text": "Publishing firm holds long position of 2.1M shares in Lotus BioPharma",
+      "formula": "holds_position_in(publishing_firm, lotus_biopharma) ∧ … ∧ shares_held == 2100000" },
+    { "id": "input::c4", "source": "input",
+      "text": "No conflict of interest is disclosed in the article",
+      "formula": "¬ DisclosesConflictOfInterest(article)" },
+    { "id": "manual::rule_0", "source": "manual",
+      "text": "If the firm holds a position, the article must disclose that conflict (SFC para 16).",
+      "formula": "holds_position_in(publishing_firm, lotus_biopharma) → DisclosesConflictOfInterest(article)" }
+  ],
+  "explanation": { "summary":
+    "The input states the firm holds a position in Lotus BioPharma [c3] yet
+     the article discloses no conflict of interest [c4]; the manual rule
+     requires disclosure whenever a position is held — so the three claims
+     cannot all be true together." }
+}</pre></details>
+    <p class="footnote small">file: test_cases/4/response_case4.json</p>
+  </section>
+
+
+
+
+
+</div>
+
+<div class="hud" id="hud">1 / 17</div>
+<div class="nav">← → navigate · F fullscreen</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  const hud=document.getElementById('hud'), bar=document.getElementById('bar');
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    hud.textContent=(i+1)+' / '+slides.length;
+    bar.style.width=((i+1)/slides.length*100)+'%';
+  }
+  function next(){show(i+1)} function prev(){show(i-1)}
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' ')next();
+    else if(e.key==='ArrowLeft'||e.key==='PageUp')prev();
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+    else if(e.key.toLowerCase()==='f'){if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen();}
+  });
+  document.getElementById('deck').addEventListener('click',e=>{
+    if(e.target.closest('.raw, a')) return;   // let raw-JSON toggle and links work without flipping slides
+    if(e.clientX < window.innerWidth*0.33) prev(); else next();
+  });
+  show(0);
+</script>
+</body>
+</html>
