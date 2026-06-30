@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hold'em Co-Pilot &mdash; AI Poker Assistant</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>&#9824; Hold'em Co-Pilot</h1>
+    <p class="tagline">Record the action from the blinds onward. The table state is derived from the sequence.</p>
+  </header>
+
+  <main class="layout">
+    <!-- ===================== SETUP ===================== -->
+    <section class="panel setup-panel">
+      <h2>1 &middot; Players &amp; Blinds</h2>
+      <div class="setup-grid">
+        <label>Small blind
+          <input id="in-sb" type="number" min="1" step="1" value="1" />
+        </label>
+        <label>Big blind
+          <input id="in-bb" type="number" min="1" step="1" value="2" />
+        </label>
+        <label>New-player stack
+          <input id="in-stack" type="number" min="0" step="1" value="200" />
+        </label>
+        <label>Big blind is
+          <select id="bb-select"></select>
+        </label>
+      </div>
+      <p class="hint"><b>Player 1 is you.</b> Click a player's position tag to make them the big blind &mdash; every other role follows automatically. Edit any chip count directly.</p>
+      <div class="players-bar">
+        <button id="btn-add-player" class="btn btn-secondary btn-small">+ Add player</button>
+        <button id="btn-next-game" class="btn btn-primary btn-small">Next game &#9654;</button>
+        <div id="hand-result" class="hand-result"></div>
+      </div>
+      <div id="players" class="players"></div>
+    </section>
+
+    <!-- ===================== TABLE + CARDS ===================== -->
+    <section class="panel table-panel">
+      <h2>2 &middot; Cards</h2>
+      <div class="felt">
+        <div class="felt-label">Community Cards</div>
+        <div id="board-slots" class="slot-row board-row"></div>
+        <div class="felt-label your-label">Your Hole Cards</div>
+        <div id="hole-slots" class="slot-row hole-row"></div>
+      </div>
+      <div class="picker-head">
+        <span id="picker-target" class="picker-target">Pick a slot, then choose a card</span>
+        <button id="clear-all" class="btn btn-ghost btn-small">Clear all cards</button>
+      </div>
+      <div id="card-picker" class="card-picker"></div>
+    </section>
+
+    <!-- ===================== ACTION SEQUENCE ===================== -->
+    <section class="panel action-panel">
+      <h2>3 &middot; Action Sequence</h2>
+      <div id="action-status" class="action-status">Action on: &mdash;</div>
+      <div id="action-controls" class="action-controls"></div>
+      <div class="seq-bar">
+        <button id="btn-undo" class="btn btn-ghost btn-small">Undo last</button>
+        <button id="btn-reset-seq" class="btn btn-ghost btn-small">Reset sequence</button>
+      </div>
+      <div id="action-log" class="action-log"></div>
+
+      <h3 class="sub">Derived state</h3>
+      <div id="derived-summary" class="derived-summary"></div>
+
+      <div class="action-buttons">
+        <button id="btn-equity" class="btn btn-secondary">Estimate Equity</button>
+        <button id="btn-decide" class="btn btn-primary">Compute Next Action</button>
+      </div>
+
+      <div id="result" class="result hidden">
+        <div class="result-action">
+          <span class="result-label">Recommended</span>
+          <span id="result-verb" class="result-verb">&mdash;</span>
+        </div>
+        <div class="equity-bars">
+          <div class="bar-line"><span>Win</span><div class="bar"><div id="bar-win" class="fill win"></div></div><b id="val-win">0%</b></div>
+          <div class="bar-line"><span>Tie</span><div class="bar"><div id="bar-tie" class="fill tie"></div></div><b id="val-tie">0%</b></div>
+          <div class="bar-line"><span>Lose</span><div class="bar"><div id="bar-lose" class="fill lose"></div></div><b id="val-lose">0%</b></div>
+        </div>
+        <p id="result-hand" class="result-hand"></p>
+        <p id="result-reason" class="result-reason"></p>
+      </div>
+    </section>
+
+    <!-- ===================== AI CODE EDITOR ===================== -->
+    <section class="panel code-panel">
+      <div class="code-head">
+        <h2>4 &middot; AI Strategy <span class="muted">&mdash; JavaScript the computer runs to decide</span></h2>
+        <div class="code-actions">
+          <button id="btn-apply" class="btn btn-secondary btn-small">Apply Strategy</button>
+          <button id="btn-reset" class="btn btn-ghost btn-small">Reset to default</button>
+        </div>
+      </div>
+      <p class="code-help">
+        Edit this code (or paste code an AI wrote for you). It must define
+        <code>decide(state, helpers)</code> and return an action. <code>state</code> holds the <b>entire table</b> &mdash; <code>seats</code>, <code>stacks</code>, <code>contributions</code>, <code>legal</code>, <code>history</code>, blinds, positions, and more. See the README for the full API.
+      </p>
+      <textarea id="code-editor" class="code-editor" spellcheck="false"></textarea>
+      <div id="code-status" class="code-status"></div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span>Runs 100% offline in your browser &middot; no data leaves this page.</span>
+  </footer>
+
+  <!-- Plain scripts (no modules) so it works from a file:// URL with no server. -->
+  <script src="js/cards.js"></script>
+  <script src="js/handEval.js"></script>
+  <script src="js/equity.js"></script>
+  <script src="js/positions.js"></script>
+  <script src="js/table.js"></script>
+  <script src="js/pots.js"></script>
+  <script src="js/tableModel.js"></script>
+  <script src="js/strategy.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/cards-ui.js"></script>
+  <script src="js/results-ui.js"></script>
+  <script src="js/betting-ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
