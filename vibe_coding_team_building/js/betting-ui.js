@@ -263,8 +263,10 @@
 
   function renderLog(s) {
     els.log.innerHTML = "";
+    // Newest actions first so the latest street stays visible without scrolling.
+    var entries = s.log.slice().reverse();
     var cur = null;
-    s.log.forEach(function (e) {
+    entries.forEach(function (e) {
       if (e.street !== cur) {
         cur = e.street;
         var h = document.createElement("div");
