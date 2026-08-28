@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "image2vec"
+version = "0.1.0"
+description = "Iteratively convert a raster image to SVG with a Pydantic AI agent on OpenRouter."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "pydantic>=2.7",
+    "pydantic-ai-slim[openrouter]>=1.0",
+    "pydantic-ai-harness>=0.20",
+    "python-dotenv>=1.0",
+    "opencv-python-headless>=4.8",
+    "numpy>=1.24",
+    "pillow>=10",
+    "cairosvg>=2.7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "ruff>=0.5"]
+
+[project.scripts]
+image2vec = "image2vec.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["image2vec*"]
+exclude = ["tests*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
